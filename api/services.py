@@ -34,6 +34,7 @@ async def process_prompt(prompt: str, level: str):
     if not await player_in_correct_level(level, "uid-of-the-player-who-made-the-request"):
         return {"error": "You already passed or did not reach this level yet."}
     
+    # TODO: Semantic cache(?)
     topical_guardrail_task = asyncio.create_task(topical_guardrail(prompt))
     llm_response_task = asyncio.create_task(get_llm_response(prompt, level))
 
@@ -49,10 +50,10 @@ async def process_prompt(prompt: str, level: str):
                 return {"error": "Your prompt is not relevant to the game."}
             elif llm_response_task in done:
                 llm_response = llm_response_task.result()
-                current_secret = secrets.get(level.upper())
+                current_secret = secrets.get(level)
 
                 # Moderation guardrail to filter out secret/password if revealed
-                if level.lower() in ["three", "four", "five"] and re.search(re.escape(current_secret), llm_response, re.IGNORECASE):
+                if level.lower() in ["two", "three", "four", "five"] and re.search(re.escape(current_secret), llm_response, re.IGNORECASE):
                     llm_response = await moderation_guardrail(llm_response)
                 return {"response": llm_response}
             
