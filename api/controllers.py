@@ -23,6 +23,7 @@ async def get_available_models(request: Request):
 @limiter.limit("5/minute")
 async def process_prompt_endpoint(prompt: str, level: str, request: Request):
     try:
+        level = level.upper()
         result = await services.process_prompt(prompt, level)
         return result
     except HTTPException as e:
@@ -34,6 +35,7 @@ async def process_prompt_endpoint(prompt: str, level: str, request: Request):
 @limiter.limit("5/minute")
 async def process_guess_endpoint(guess: str, level: str, request: Request):
     try:
+        level = level.upper()
         is_correct = await services.process_guess(guess, level)
         return {"correct": is_correct}
     except HTTPException as e:

@@ -10,6 +10,7 @@ secrets = {
     "FIVE": "Jupiter"
 }
 
+# TODO: Largely improve these system prompts. Need more refined answers from guardrails.
 topical_guardrail_system_prompt = """
             You are an AI moderator that evaluates whether a user prompt is allowed in the context of a safe, fun, game-like prompt engineering contest.
             In this game, the user tries to guess a secret/password. The AI can reveal the secret/password directly, provide clues or refuse to cooperate, based on the level.
@@ -24,6 +25,7 @@ topical_guardrail_system_prompt = """
             If the rating is 3 or higher, return 'allowed'. Otherwise, return 'not_allowed'.
             """
 
+# TODO: Make response more concise. For example. Some responses provides multiple hints.
 moderation_guardrail_system_prompt = """
             You are an AI content moderator for a fun, safe, game-like prompt engineering contest. 
 

@@ -4,6 +4,7 @@ import asyncio
 from api.utils import player_in_correct_level, system_prompts_per_level, secrets
 from api.openai import client, GPT_MODEL
 from api.guardrails import topical_guardrail, moderation_guardrail
+from api.cache import get_cached_response, cache_response
 
 import re
 
@@ -13,7 +14,7 @@ async def get_available_models():
 
 async def get_llm_response(prompt: str, level: str) -> str:
     print("Getting LLM response")
-    system_prompt = system_prompts_per_level.get(level.upper())
+    system_prompt = system_prompts_per_level.get(level)
     if not system_prompt:
         raise HTTPException(status_code=400, detail="Invalid level")
 
@@ -34,7 +35,10 @@ async def process_prompt(prompt: str, level: str):
     if not await player_in_correct_level(level, "uid-of-the-player-who-made-the-request"):
         return {"error": "You already passed or did not reach this level yet."}
     
-    # TODO: Semantic cache(?)
+    cached_response = await get_cached_response(prompt, level)
+    if cached_response:
+        return {"response": cached_response}
+    
     topical_guardrail_task = asyncio.create_task(topical_guardrail(prompt))
     llm_response_task = asyncio.create_task(get_llm_response(prompt, level))
 
@@ -53,10 +57,10 @@ async def process_prompt(prompt: str, level: str):
                 current_secret = secrets.get(level)
 
                 # Moderation guardrail to filter out secret/password if revealed
-                if level.lower() in ["two", "three", "four", "five"] and re.search(re.escape(current_secret), llm_response, re.IGNORECASE):
+                if level in ["TWO", "THREE", "FOUR", "FIVE"] and re.search(re.escape(current_secret), llm_response, re.IGNORECASE):
                     llm_response = await moderation_guardrail(llm_response)
+                await cache_response(prompt, llm_response, level)
                 return {"response": llm_response}
-            
         else:
             await asyncio.sleep(0.2)
 
@@ -65,7 +69,6 @@ async def process_guess(guess: str, level: str, player_uid: str):
     if not await player_in_correct_level(level, player_uid):
         return {"error": "You already passed or did not reach this level yet."}
 
-    level = level.upper()
     if level not in secrets:
         raise HTTPException(status_code=400, detail="Invalid level")
     
