@@ -1,13 +1,13 @@
 version: '3.8'
 services:
-  prompt-engineering-api:
-    container_name: prompt-engineering-api
-    build: .
-    image: prompt-engineering-api:latest
+  ai-agent-service:
+    container_name: ai-agent-service
+    build: ./ai-agent-service/
+    image: ai-agent-service:latest
     ports:
       - "8000:8000"
     volumes:
-      - ./:/app
+      - ./ai-agent-service:/app
     env_file:
       - .env
 
