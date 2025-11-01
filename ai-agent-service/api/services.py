@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 import asyncio
 
-from api.utils import player_in_correct_level, system_prompts_per_level, secrets
+from api.utils import system_prompts_per_level, secrets
 from api.openai import client, GPT_MODEL
 from api.guardrails import topical_guardrail, moderation_guardrail
 from api.cache import get_cached_response, cache_response
@@ -30,11 +30,9 @@ async def get_llm_response(prompt: str, level: str) -> str:
     print("Got LLM response")
     return response.choices[0].message.content
 
+
+# This function assumes the api gateway(node-service) will make sure the user is in the correct level
 async def process_prompt(prompt: str, level: str):
-    # TODO
-    if not await player_in_correct_level(level, "uid-of-the-player-who-made-the-request"):
-        return {"error": "You already passed or did not reach this level yet."}
-    
     cached_response = await get_cached_response(prompt, level)
     if cached_response:
         return {"response": cached_response}
@@ -64,11 +62,8 @@ async def process_prompt(prompt: str, level: str):
         else:
             await asyncio.sleep(0.2)
 
-async def process_guess(guess: str, level: str, player_uid: str):
-    # Make sure user is in the correct level
-    if not await player_in_correct_level(level, player_uid):
-        return {"error": "You already passed or did not reach this level yet."}
-
+# Function assumes the api gateway(node-service) will make sure the user is in the correct level
+async def process_guess(guess: str, level: str):
     if level not in secrets:
         raise HTTPException(status_code=400, detail="Invalid level")
     
