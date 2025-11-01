@@ -1,7 +1,3 @@
-async def player_in_correct_level(level: str, player_uid: str) -> bool:
-    # TODO
-    return True
-
 secrets = {
     "ONE": "plaza",
     "TWO": "Auditorium",
