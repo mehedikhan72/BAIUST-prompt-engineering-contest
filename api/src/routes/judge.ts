@@ -84,6 +84,33 @@ judge.get('/levels/:phaseNumber', async (c) => {
   }
 });
 
+// ===== File Upload =====
+judge.post('/upload', async (c) => {
+  try {
+    const body = await c.req.parseBody();
+    const file = body.file as File;
+    
+    if (!file) {
+      return c.json({ error: 'No file provided' }, 400);
+    }
+    
+    // Convert file to buffer
+    const buffer = Buffer.from(await file.arrayBuffer());
+    
+    // Determine content type
+    let contentType = file.type || 'application/octet-stream';
+    
+    // Upload to Bunny (using judge folder)
+    const filename = `${Date.now()}-${file.name}`;
+    const url = await uploadFile(buffer, 'judge', filename, contentType);
+    
+    return c.json({ url });
+  } catch (error: any) {
+    console.error('Upload error:', error);
+    return c.json({ error: 'Failed to upload file' }, 500);
+  }
+});
+
 // ===== Team Management =====
 judge.get('/teams', async (c) => {
   try {
