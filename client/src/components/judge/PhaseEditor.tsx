@@ -7,6 +7,8 @@ import api from '@/lib/api';
 export default function PhaseEditor() {
   const queryClient = useQueryClient();
   const [editingLevel, setEditingLevel] = useState<any>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadingAsset, setUploadingAsset] = useState(false);
 
   const { data: levels } = useQuery({
     queryKey: ['judge-levels'],
@@ -31,6 +33,58 @@ export default function PhaseEditor() {
     e.preventDefault();
     if (editingLevel) {
       updateLevel.mutate(editingLevel);
+    }
+  };
+
+  const handleReferenceImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await api.post('/judge/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setEditingLevel({ ...editingLevel, referenceImage: res.data.url });
+    } catch (error) {
+      alert('Failed to upload image');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleAssetUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingAsset(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await api.post('/judge/upload', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        return res.data.url;
+      });
+
+      const urls = await Promise.all(uploadPromises);
+      const currentAssets = editingLevel.assets || [];
+      setEditingLevel({ ...editingLevel, assets: [...currentAssets, ...urls] });
+    } catch (error) {
+      alert('Failed to upload assets');
+    } finally {
+      setUploadingAsset(false);
     }
   };
 
@@ -117,24 +171,99 @@ export default function PhaseEditor() {
                 <>
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                      Reference Image URL
+                      Reference Image
                     </label>
+                    {editingLevel.referenceImage && (
+                      <div className="mb-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                          {editingLevel.referenceImage}
+                        </p>
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleReferenceImageUpload}
+                        disabled={uploading}
+                        className="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      {uploading && <span className="text-sm text-gray-500 py-2">Uploading...</span>}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Or paste URL directly:
+                    </p>
                     <input
                       type="text"
                       value={editingLevel.referenceImage || ''}
                       onChange={(e) => setEditingLevel({ ...editingLevel, referenceImage: e.target.value })}
-                      className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                      placeholder="https://..."
+                      className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white mt-1"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                      Assets (comma-separated)
+                      Assets
                     </label>
+                    {editingLevel.assets && editingLevel.assets.length > 0 && (
+                      <div className="mb-2 space-y-1">
+                        {editingLevel.assets.map((asset: string, i: number) => (
+                          <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                            <span className="flex-1 text-xs text-gray-700 dark:text-gray-300 truncate">
+                              {asset}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newAssets = editingLevel.assets.filter((_: string, idx: number) => idx !== i);
+                                setEditingLevel({ ...editingLevel, assets: newAssets });
+                              }}
+                              className="text-red-600 hover:text-red-800 text-xs"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="flex gap-2">
+                      <input
+                        type="file"
+                        multiple
+                        onChange={handleAssetUpload}
+                        disabled={uploadingAsset}
+                        className="flex-1 px-3 py-2 border dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white text-sm file:mr-4 file:py-1 file:px-3 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                      {uploadingAsset && <span className="text-sm text-gray-500 py-2">Uploading...</span>}
+                    </div>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Or enter URLs/text (comma-separated):
+                    </p>
                     <input
                       type="text"
-                      value={editingLevel.assets?.join(', ') || ''}
-                      onChange={(e) => setEditingLevel({ ...editingLevel, assets: e.target.value.split(',').map((s: string) => s.trim()) })}
-                      className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+                      value=""
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const newAssets = e.target.value.split(',').map((s: string) => s.trim()).filter(Boolean);
+                          const currentAssets = editingLevel.assets || [];
+                          setEditingLevel({ ...editingLevel, assets: [...currentAssets, ...newAssets] });
+                          e.target.value = '';
+                        }
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const input = e.target as HTMLInputElement;
+                          if (input.value) {
+                            const newAssets = input.value.split(',').map((s: string) => s.trim()).filter(Boolean);
+                            const currentAssets = editingLevel.assets || [];
+                            setEditingLevel({ ...editingLevel, assets: [...currentAssets, ...newAssets] });
+                            input.value = '';
+                          }
+                        }
+                      }}
+                      placeholder="cat, dog, tree or https://..."
+                      className="w-full px-3 py-2 border dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white mt-1"
                     />
                   </div>
                 </>
