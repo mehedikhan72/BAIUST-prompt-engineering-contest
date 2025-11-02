@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 services:
   ai-agent-service:
     container_name: ai-agent-service
@@ -10,5 +10,62 @@ services:
       - ./ai-agent-service:/app
     env_file:
       - .env
+    networks:
+      - contest-network
 
-    
+  api:
+    container_name: api
+    build: ./api/
+    image: contest-api:latest
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+    env_file:
+      - .env
+    environment:
+      - PORT=3001
+      - AI_AGENT_SERVICE_URL=http://ai-agent-service:8000
+    depends_on:
+      - mongo
+      - ai-agent-service
+    networks:
+      - contest-network
+
+  client:
+    container_name: client
+    build: ./client/
+    image: contest-client:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:3001/api
+    depends_on:
+      - api
+    networks:
+      - contest-network
+
+  mongo:
+    container_name: mongo
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password
+    networks:
+      - contest-network
+
+volumes:
+  mongo-data:
+
+networks:
+  contest-network:
+    driver: bridge
