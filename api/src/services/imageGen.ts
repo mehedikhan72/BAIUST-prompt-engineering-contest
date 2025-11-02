@@ -10,21 +10,35 @@ export async function generateImage(prompt: string, assets: string[] = [], refer
     // Combine user prompt with assets
     const fullPrompt = assets.length > 0 ? `${prompt}. Include: ${assets.join(", ")}` : prompt;
 
-    // Download reference image if provided
-    let images: any[] = [];
+    let response;
+
+    // Path 1: WITH Reference Image (Image Editing)
     if (referenceImageUrl) {
+      // Download reference image
       const imageResponse = await axios.get(referenceImageUrl, { responseType: "arraybuffer" });
       const imageBuffer = Buffer.from(imageResponse.data);
       const imageFile = await toFile(imageBuffer, "reference.png", { type: "image/png" });
-      images.push(imageFile);
-    }
 
-    // Use gpt-image-1 with images.edit
-    const response = await openai.images.edit({
-      model: "gpt-image-1",
-      image: images,
-      prompt: fullPrompt,
-    });
+      // Use DALL-E 2 for image editing (single file, not array!)
+      response = await openai.images.edit({
+        model: "dall-e-2",
+        image: imageFile,
+        prompt: fullPrompt,
+        n: 1,
+        size: "1024x1024",
+        response_format: "b64_json"
+      });
+    } else {
+      // Path 2: WITHOUT Reference Image (Image Generation)
+      // Use DALL-E 3 for generation from scratch
+      response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: fullPrompt,
+        n: 1,
+        size: "1024x1024",
+        response_format: "b64_json"
+      });
+    }
 
     // Get base64 image from response
     const imageBase64 = response.data[0].b64_json;

@@ -244,6 +244,50 @@ team.post('/phase2/:levelNumber/generate', async (c) => {
   }
 });
 
+// ===== Phase 2: Upload Image =====
+team.post('/phase2/:levelNumber/upload', async (c) => {
+  try {
+    const user = c.get('user');
+    const levelNumber = parseInt(c.req.param('levelNumber'));
+    const body = await c.req.parseBody();
+    
+    const imageFile = body.image as File;
+    
+    if (!imageFile) {
+      return c.json({ error: 'Image file is required' }, 400);
+    }
+    
+    // Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(imageFile.type)) {
+      return c.json({ error: 'Invalid file type. Only JPG, PNG, and WEBP are allowed' }, 400);
+    }
+    
+    // Validate file size (10MB max)
+    const maxSize = 10 * 1024 * 1024; // 10MB in bytes
+    if (imageFile.size > maxSize) {
+      return c.json({ error: 'File size exceeds 10MB limit' }, 400);
+    }
+    
+    // Validate access
+    const hasAccess = await checkLevelAccess(user._id, 2, levelNumber);
+    if (!hasAccess) {
+      return c.json({ error: 'Level not unlocked' }, 403);
+    }
+    
+    // Convert file to buffer
+    const buffer = Buffer.from(await imageFile.arrayBuffer());
+    
+    // Upload to Bunny
+    const bunnyUrl = await uploadImage(buffer, user._id.toString());
+    
+    return c.json({ imageUrl: bunnyUrl });
+  } catch (error: any) {
+    console.error('Phase 2 upload error:', error);
+    return c.json({ error: 'Failed to upload image' }, 500);
+  }
+});
+
 // ===== Phase 2: Submit =====
 team.post('/phase2/:levelNumber/submit', async (c) => {
   try {

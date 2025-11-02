@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import Image from 'next/image';
+import { Upload, ImageIcon } from 'lucide-react';
 
 export default function Phase2LevelPage() {
   const router = useRouter();
@@ -15,6 +16,9 @@ export default function Phase2LevelPage() {
 
   const [prompt, setPrompt] = useState('');
   const [generatedImageUrl, setGeneratedImageUrl] = useState('');
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!user || user.role !== 'TEAM') {
@@ -62,9 +66,57 @@ export default function Phase2LevelPage() {
       alert('Submission sent for judging!');
       setPrompt('');
       setGeneratedImageUrl('');
+      setUploadedFile(null);
+      setPreviewUrl('');
       router.push('/team');
     },
   });
+
+  const uploadImage = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await api.post(`/team/phase2/${level}/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      setGeneratedImageUrl(data.imageUrl);
+      setUploadedFile(null);
+      setPreviewUrl('');
+    },
+  });
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        alert('Invalid file type. Only JPG, PNG, and WEBP are allowed.');
+        return;
+      }
+      
+      // Validate file size (10MB max)
+      const maxSize = 10 * 1024 * 1024;
+      if (file.size > maxSize) {
+        alert('File size exceeds 10MB limit.');
+        return;
+      }
+      
+      setUploadedFile(file);
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const latestSubmission = submissions?.[0];
   const canSubmit = !latestSubmission || 
@@ -184,6 +236,61 @@ export default function Phase2LevelPage() {
             >
               {generateImage.isPending ? 'Generating...' : 'Generate Image'}
             </button>
+
+            {/* OR Divider */}
+            <div className="relative mb-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-200 dark:border-gray-700" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white dark:bg-gray-800 px-2 text-gray-500 dark:text-gray-400">
+                  Or upload your own
+                </span>
+              </div>
+            </div>
+
+            {/* Upload Image Section */}
+            <div className="mb-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/jpg,image/png,image/webp"
+                onChange={handleFileChange}
+                className="hidden"
+                disabled={!canSubmit}
+              />
+              
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                disabled={!canSubmit}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-800 dark:hover:to-gray-700 text-gray-700 dark:text-gray-300 rounded-lg border border-gray-200 dark:border-gray-700 transition-all duration-200 disabled:opacity-50"
+              >
+                <ImageIcon size={20} />
+                <span>{uploadedFile ? uploadedFile.name : 'Choose Image'}</span>
+              </button>
+
+              {previewUrl && (
+                <div className="mt-4">
+                  <p className="text-sm font-medium mb-2 text-gray-900 dark:text-white">Preview:</p>
+                  <div className="relative w-full h-48 bg-gray-100 dark:bg-gray-700 rounded-lg mb-2">
+                    <Image
+                      src={previewUrl}
+                      alt="Preview"
+                      fill
+                      className="object-contain rounded-lg"
+                    />
+                  </div>
+                  <button
+                    onClick={() => uploadedFile && uploadImage.mutate(uploadedFile)}
+                    disabled={uploadImage.isPending || !uploadedFile}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-br from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white rounded-lg transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50"
+                  >
+                    <Upload size={20} />
+                    <span>{uploadImage.isPending ? 'Uploading...' : 'Upload Image'}</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {generatedImageUrl && (
               <div>

@@ -42,3 +42,7 @@ Thumbs.db
 
 # Docker
 docker-compose.override.yml
+
+# Uploaded files (keep README)
+api/public/uploads/*
+!api/public/uploads/README.md
