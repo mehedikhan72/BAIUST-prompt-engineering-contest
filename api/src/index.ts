@@ -1,5 +1,4 @@
 import { serve } from '@hono/node-server';
-import { serveStatic } from '@hono/node-server/serve-static';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import dotenv from 'dotenv';
@@ -19,9 +18,6 @@ app.use('/*', cors({
   origin: ['http://localhost:3000', 'http://client:3000'],
   credentials: true
 }));
-
-// Serve static files from public/uploads
-app.use('/uploads/*', serveStatic({ root: './public' }));
 
 // Health check
 app.get('/', (c) => {

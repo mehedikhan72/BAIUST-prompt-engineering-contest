@@ -133,19 +133,19 @@ export default function Phase1LevelPage() {
   }, [messages.length]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <header className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 mb-1">
                 {levelData?.name || `Phase 1 - Level ${level}`}
               </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{levelData?.description || "Password Retrieval"}</p>
+              <p className="text-sm text-slate-600 dark:text-slate-400">{levelData?.description || "Password Retrieval"}</p>
             </div>
             <button
               onClick={() => router.push("/team")}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg"
+              className="px-5 py-2.5 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 font-medium rounded-lg transition-colors duration-200"
             >
               Back to Dashboard
             </button>
@@ -156,42 +156,46 @@ export default function Phase1LevelPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-12">
         {/* Error Display */}
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-lg mb-6">
+          <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3.5 rounded-xl mb-6">
             {error}
           </div>
         )}
 
         {/* Chat Messages */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6 min-h-[400px] max-h-[500px] overflow-y-auto">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6 mb-6 min-h-[400px] max-h-[500px] overflow-y-auto">
           {messages.length === 0 && !sendPrompt.isPending ? (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-              Start chatting with the AI agent to retrieve the password
-            </p>
+            <div className="text-center py-12">
+              <p className="text-slate-500 dark:text-slate-400">
+                Start chatting with the AI agent to retrieve the password
+              </p>
+            </div>
           ) : (
             <div className="space-y-4">
               {messages.map((msg, i) => (
                 <div
                   key={i}
-                  className={`p-4 rounded-lg ${
-                    msg.role === "user" ? "bg-blue-50 dark:bg-blue-900/20 ml-12" : "bg-gray-50 dark:bg-gray-700 mr-12"
+                  className={`p-4 rounded-xl ${
+                    msg.role === "user" 
+                      ? "bg-slate-100 dark:bg-slate-800 ml-12 border border-slate-200 dark:border-slate-700" 
+                      : "bg-slate-50 dark:bg-slate-800/50 mr-12 border border-slate-200 dark:border-slate-800"
                   }`}
                 >
-                  <p className="text-sm font-medium mb-1 text-gray-900 dark:text-white">
+                  <p className="text-sm font-semibold mb-2 text-slate-900 dark:text-slate-100">
                     {msg.role === "user" ? "You" : "AI Agent"}
                   </p>
-                  <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{msg.content}</p>
+                  <p className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                 </div>
               ))}
               {/* Typing Animation */}
               {sendPrompt.isPending && (
-                <div className="p-4 rounded-lg bg-gray-50 dark:bg-gray-700 mr-12">
-                  <p className="text-sm font-medium mb-1 text-gray-900 dark:text-white">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 mr-12 border border-slate-200 dark:border-slate-800">
+                  <p className="text-sm font-semibold mb-2 text-slate-900 dark:text-slate-100">
                     AI Agent
                   </p>
-                  <div className="flex items-center gap-1">
-                    <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                    <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                    <div className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                    <div className="w-2 h-2 bg-slate-400 dark:bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                   </div>
                 </div>
               )}
@@ -200,11 +204,11 @@ export default function Phase1LevelPage() {
           )}
         </div>
 
-        {/* Prompt Input - Modern Design */}
+        {/* Prompt Input */}
         <div className="w-full max-w-4xl mb-6">
-          <div className="bg-white/80 backdrop-blur-xl dark:bg-black/90 rounded-3xl shadow-2xl border border-gray-200/50 dark:border-gray-800/50 p-6 transition-all duration-300 hover:shadow-3xl">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-5 transition-all duration-200">
             <textarea
-              className="w-full p-3 bg-transparent text-gray-800 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none resize-none text-base font-medium leading-relaxed"
+              className="w-full p-3 bg-transparent text-slate-800 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none resize-none text-base leading-relaxed"
               rows={2}
               placeholder="Chat with the AI agent to retrieve the password..."
               value={prompt}
@@ -213,7 +217,6 @@ export default function Phase1LevelPage() {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   if (prompt.trim() && !sendPrompt.isPending) {
-                    // Add user message immediately
                     setMessages((prev) => [...prev, { role: "user", content: prompt }]);
                     sendPrompt.mutate(prompt);
                     setPrompt("");
@@ -222,26 +225,26 @@ export default function Phase1LevelPage() {
               }}
               disabled={sendPrompt.isPending}
             />
-            {/* Responsive container for controls */}
+            {/* Controls */}
             <div className="flex flex-col md:flex-row items-center justify-between mt-4 gap-4 md:gap-0">
               {/* Left side controls */}
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2.5">
                 {/* Add Button and Popup */}
                 <div className="relative" ref={addPopupRef}>
                   <button 
                     type="button"
                     onClick={() => setAddPopupOpen(!isAddPopupOpen)}
-                    className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-800 dark:hover:to-gray-700 text-gray-600 dark:text-gray-300 rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl border border-gray-200/50 dark:border-gray-700/50"
+                    className="flex items-center justify-center w-10 h-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors duration-200 border border-slate-200 dark:border-slate-700"
                   >
-                    <Plus size={22} />
+                    <Plus size={20} />
                   </button>
                   {isAddPopupOpen && (
-                    <div className="absolute bottom-full left-0 mb-3 w-72 bg-white/95 backdrop-blur-xl dark:bg-gray-900/95 rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 z-10">
+                    <div className="absolute bottom-full left-0 mb-2 w-64 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 z-10">
                       <ul>
                         {addMenuItems.map((item, index) => (
-                          <li key={index} className="flex items-center gap-4 p-4 hover:bg-gray-50/80 dark:hover:bg-gray-800/80 cursor-pointer rounded-xl transition-colors duration-200 first:rounded-t-2xl last:rounded-b-2xl">
+                          <li key={index} className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg border-b border-slate-100 dark:border-slate-800 last:border-0">
                             {item.icon}
-                            <span className="font-medium text-gray-700 dark:text-gray-200">{item.text}</span>
+                            <span className="font-medium text-slate-700 dark:text-slate-300">{item.text}</span>
                           </li>
                         ))}
                       </ul>
@@ -254,17 +257,17 @@ export default function Phase1LevelPage() {
                   <button 
                     type="button"
                     onClick={() => setModelOpen(!isModelOpen)} 
-                    className="flex items-center justify-center h-12 px-4 lg:px-5 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-800/30 hover:from-blue-100 hover:to-indigo-200 dark:hover:from-blue-800/40 dark:hover:to-indigo-700/40 text-gray-800 dark:text-gray-200 rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl border border-blue-200/50 dark:border-blue-700/30"
+                    className="flex items-center justify-center h-10 px-3 lg:px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors duration-200 border border-slate-200 dark:border-slate-700"
                   >
-                    <Brain size={18} className="text-blue-600 dark:text-blue-400" />
-                    <span className="font-semibold ml-2 hidden lg:block">{selectedModel}</span>
-                    <ChevronDown size={16} className="ml-2 hidden lg:block" />
+                    <Brain size={18} className="text-slate-600 dark:text-slate-400" />
+                    <span className="font-medium ml-2 hidden lg:block text-sm">{selectedModel}</span>
+                    <ChevronDown size={16} className="ml-1.5 hidden lg:block" />
                   </button>
                   {isModelOpen && (
-                    <div className="absolute bottom-full left-0 mb-3 w-64 bg-white/95 backdrop-blur-xl dark:bg-gray-900/95 rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-700/50 z-10">
+                    <div className="absolute bottom-full left-0 mb-2 w-56 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-800 z-10">
                       <ul>
                         {models.map((model) => (
-                          <li key={model} onClick={() => handleModelSelect(model)} className="p-4 hover:bg-gray-50/80 dark:hover:bg-gray-800/80 cursor-pointer font-medium text-gray-700 dark:text-gray-200 rounded-xl transition-colors duration-200 first:rounded-t-2xl last:rounded-b-2xl">
+                          <li key={model} onClick={() => handleModelSelect(model)} className="px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer font-medium text-slate-700 dark:text-slate-300 transition-colors duration-150 first:rounded-t-lg last:rounded-b-lg border-b border-slate-100 dark:border-slate-800 last:border-0">
                             {model}
                           </li>
                         ))}
@@ -274,32 +277,31 @@ export default function Phase1LevelPage() {
                 </div>
               </div>
               {/* Right side controls */}
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2.5">
                 <button 
                   type="button"
                   onClick={() => console.log("Mic clicked")} 
-                  className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 hover:from-gray-100 hover:to-gray-200 dark:hover:from-gray-800 dark:hover:to-gray-700 text-gray-600 dark:text-gray-300 rounded-full transition-all duration-200 shadow-lg hover:shadow-xl border border-gray-200/50 dark:border-gray-700/50"
+                  className="flex items-center justify-center w-10 h-10 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg transition-colors duration-200 border border-slate-200 dark:border-slate-700"
                 >
-                  <Mic size={22} />
+                  <Mic size={20} />
                 </button>
                 <button 
                   type="button"
                   onClick={() => {
                     if (prompt.trim()) {
-                      // Add user message immediately
                       setMessages((prev) => [...prev, { role: "user", content: prompt }]);
                       sendPrompt.mutate(prompt);
                       setPrompt("");
                     }
                   }}
                   disabled={sendPrompt.isPending || !prompt.trim()}
-                  className={`flex items-center justify-center w-12 h-12 rounded-2xl transition-all duration-200 shadow-lg hover:shadow-xl ${
+                  className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors duration-200 ${
                     prompt.trim() 
-                      ? 'bg-gradient-to-br from-gray-800 to-gray-900 hover:from-gray-900 hover:to-black dark:from-blue-600 dark:to-blue-700 dark:hover:from-blue-500 dark:hover:to-blue-600 text-white' 
-                      : 'bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-800 dark:to-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                      ? 'bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900' 
+                      : 'bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
                   }`}
                 >
-                  <ArrowUp size={22} />
+                  <ArrowUp size={20} />
                 </button>
               </div>
             </div>
@@ -307,8 +309,8 @@ export default function Phase1LevelPage() {
         </div>
 
         {/* Password Guess */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <h3 className="font-medium mb-3 text-gray-900 dark:text-white">Submit Password Guess</h3>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
+          <h3 className="font-semibold mb-4 text-slate-900 dark:text-slate-100">Submit Password Guess</h3>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -316,25 +318,25 @@ export default function Phase1LevelPage() {
                 sendGuess.mutate(guess);
               }
             }}
-            className="flex gap-2"
+            className="flex gap-2.5"
           >
             <input
               type="text"
               value={guess}
               onChange={(e) => setGuess(e.target.value)}
               placeholder="Enter your password guess..."
-              className="flex-1 px-4 py-2 border dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-white"
+              className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition-all duration-200"
               disabled={sendGuess.isPending}
             />
             <button
               type="submit"
               disabled={sendGuess.isPending || !guess.trim()}
-              className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg disabled:opacity-50"
+              className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {sendGuess.isPending ? "Submitting..." : "Submit Guess"}
             </button>
           </form>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">Wrong guesses add 10 minutes penalty</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-3">⚠️ Wrong guesses add 10 minutes penalty</p>
         </div>
       </div>
     </div>

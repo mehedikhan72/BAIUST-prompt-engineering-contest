@@ -20,8 +20,8 @@ export default function Home() {
   }, [user, router]);
 
   return (
-    <div className="relative w-full min-h-screen flex items-center justify-center font-sans overflow-hidden bg-white dark:bg-black">
-      <div className="relative w-full max-w-sm p-6 mx-4 bg-white dark:bg-black rounded-lg border border-zinc-200 dark:border-zinc-800 shadow-lg dark:shadow-zinc-900/50">
+    <div className="relative w-full min-h-screen flex items-center justify-center font-sans overflow-hidden bg-slate-50 dark:bg-slate-950">
+      <div className="relative w-full max-w-sm p-6 mx-4 bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-lg">
         <LoginForm />
       </div>
     </div>

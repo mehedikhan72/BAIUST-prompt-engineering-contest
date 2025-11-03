@@ -213,7 +213,7 @@ team.post('/phase2/:levelNumber/generate', async (c) => {
   try {
     const user = c.get('user');
     const levelNumber = parseInt(c.req.param('levelNumber'));
-    const { prompt } = await c.req.json();
+    const { prompt, referenceImageUrl } = await c.req.json();
     
     if (!prompt) {
       return c.json({ error: 'Prompt is required' }, 400);
@@ -231,8 +231,11 @@ team.post('/phase2/:levelNumber/generate', async (c) => {
       return c.json({ error: 'Level not found' }, 404);
     }
     
-    // Generate image using gpt-image-1 with reference image
-    const imageBuffer = await generateImage(prompt, level.assets || [], level.referenceImage);
+    // Use user-uploaded reference if provided, otherwise use level's reference
+    const finalReferenceImage = referenceImageUrl || level.referenceImage;
+    
+    // Generate image using AI with reference image (if any)
+    const imageBuffer = await generateImage(prompt, level.assets || [], finalReferenceImage);
     
     // Upload to Bunny
     const bunnyUrl = await uploadImage(imageBuffer, user._id.toString());
