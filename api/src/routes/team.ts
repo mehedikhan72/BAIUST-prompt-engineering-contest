@@ -217,12 +217,15 @@ team.post('/phase1/:levelNumber/guess', async (c) => {
   }
 });
 
-// ===== Phase 2: Generate Image =====
+// ===== Phase 2: Generate Image with Progress Updates =====
 team.post('/phase2/:levelNumber/generate', async (c) => {
   try {
     const user = c.get('user');
     const levelNumber = parseInt(c.req.param('levelNumber'));
-    const { prompt, referenceImageUrl } = await c.req.json();
+    const body = await c.req.parseBody();
+    
+    const prompt = body.prompt as string;
+    const referenceImageFile = body.referenceImage as File;
     
     if (!prompt) {
       return c.json({ error: 'Prompt is required' }, 400);
@@ -240,19 +243,51 @@ team.post('/phase2/:levelNumber/generate', async (c) => {
       return c.json({ error: 'Level not found' }, 404);
     }
     
-    // Use user-uploaded reference if provided, otherwise use level's reference
-    const finalReferenceImage = referenceImageUrl || level.referenceImage;
+    console.log('🎨 Starting image generation for level:', levelNumber);
+    console.log('User:', user._id);
+    console.log('Prompt:', prompt);
+    console.log('Has reference image:', !!referenceImageFile);
     
-    // Generate image using AI with reference image (if any)
-    const imageBuffer = await generateImage(prompt, level.assets || [], finalReferenceImage);
+    // Convert reference image file to buffer if provided
+    let referenceImageBuffer: Buffer | undefined;
+    if (referenceImageFile) {
+      console.log('📷 Processing reference image:', referenceImageFile.name);
+      referenceImageBuffer = Buffer.from(await referenceImageFile.arrayBuffer());
+    }
     
-    // Upload to Bunny
-    const bunnyUrl = await uploadImage(imageBuffer, user._id.toString());
+    // Collect user assets
+    const userAssets: Buffer[] = [];
+    let assetIndex = 0;
+    while (body[`asset_${assetIndex}`]) {
+      const assetFile = body[`asset_${assetIndex}`] as File;
+      if (assetFile) {
+        console.log(`📎 Processing user asset ${assetIndex}:`, assetFile.name);
+        userAssets.push(Buffer.from(await assetFile.arrayBuffer()));
+      }
+      assetIndex++;
+    }
     
-    return c.json({ imageUrl: bunnyUrl });
+    // Generate image using AI with reference image and assets
+    console.log('🚀 Calling generateImage function...');
+    const imageBuffer = await generateImage(
+      prompt, 
+      level.assets || [], 
+      referenceImageBuffer,
+      userAssets
+    );
+    
+    // Convert buffer to base64 for immediate preview
+    const base64Image = `data:image/png;base64,${imageBuffer.toString('base64')}`;
+    console.log('✅ Image generation completed, returning base64 result');
+    
+    return c.json({ 
+      imageUrl: base64Image,
+      message: 'Image generated successfully' 
+    });
+    
   } catch (error: any) {
-    console.error('Phase 2 generate error:', error);
-    return c.json({ error: 'Failed to generate image' }, 500);
+    console.error('❌ Phase 2 generate error:', error);
+    return c.json({ error: error.message || 'Failed to generate image' }, 500);
   }
 });
 
@@ -341,6 +376,18 @@ team.post('/phase2/:levelNumber/submit', async (c) => {
       return c.json({ error: 'Resubmission not allowed for this level' }, 403);
     }
     
+    // Convert base64 image to buffer and upload to Bunny for judging
+    let finalImageUrl = imageUrl;
+    if (imageUrl.startsWith('data:image/')) {
+      // Extract base64 data and convert to buffer
+      const base64Data = imageUrl.split(',')[1];
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+      
+      // Upload to Bunny for permanent storage
+      finalImageUrl = await uploadImage(imageBuffer, user._id.toString());
+      console.log(`📤 Image uploaded to Bunny for submission: ${finalImageUrl}`);
+    }
+    
     // Create submission
     const submission = await Submission.create({
       teamId: user._id,
@@ -348,7 +395,7 @@ team.post('/phase2/:levelNumber/submit', async (c) => {
       levelNumber,
       type: 'PHASE2_IMAGE',
       content: prompt,
-      generatedImageUrl: imageUrl,
+      generatedImageUrl: finalImageUrl,
       status: 'PENDING',
       canResubmit: false
     });

@@ -50,18 +50,34 @@ async function downloadImageWithRetry(url: string, maxRetries = 3, delayMs = 200
   throw new Error('Failed to download reference image');
 }
 
-export async function generateImage(prompt: string, assets: string[] = [], referenceImageUrl?: string): Promise<Buffer> {
+export async function generateImage(
+  prompt: string, 
+  assets: string[] = [], 
+  referenceImageBuffer?: Buffer, 
+  userAssets: Buffer[] = []
+): Promise<Buffer> {
   try {
+    console.log('🎨 Starting image generation...');
+    console.log('Prompt:', prompt);
+    console.log('Level assets:', assets);
+    console.log('Has reference image:', !!referenceImageBuffer);
+    console.log('User assets count:', userAssets.length);
+
     // Combine user prompt with assets
-    const fullPrompt = assets.length > 0 ? `${prompt}. Include: ${assets.join(", ")}` : prompt;
+    let fullPrompt = prompt;
+    if (assets.length > 0) {
+      fullPrompt += `. Include these assets: ${assets.join(", ")}`;
+    }
+    if (userAssets.length > 0) {
+      fullPrompt += `. Also incorporate the ${userAssets.length} uploaded asset(s)`;
+    }
 
     let response;
 
-    if (referenceImageUrl) {
+    if (referenceImageBuffer) {
       // Path 1: WITH reference image - use gpt-image-1 for editing
-      console.log('Downloading reference image:', referenceImageUrl);
-      const imageBuffer = await downloadImageWithRetry(referenceImageUrl);
-      const imageFile = await toFile(imageBuffer, "reference.png", { type: "image/png" });
+      console.log('🖼️ Using reference image with gpt-image-1');
+      const imageFile = await toFile(referenceImageBuffer, "reference.png", { type: "image/png" });
 
       response = await openai.images.edit({
         model: "gpt-image-1",
@@ -70,6 +86,7 @@ export async function generateImage(prompt: string, assets: string[] = [], refer
       });
     } else {
       // Path 2: WITHOUT reference image - use dall-e-3 for generation
+      console.log('✨ Generating new image with dall-e-3');
       response = await openai.images.generate({
         model: "dall-e-3",
         prompt: fullPrompt,
@@ -85,11 +102,13 @@ export async function generateImage(prompt: string, assets: string[] = [], refer
       throw new Error("No image data returned from OpenAI");
     }
 
+    console.log('✅ Image generated successfully!');
+    
     // Convert base64 to buffer
     const imageBuffer = Buffer.from(imageBase64, "base64");
     return imageBuffer;
   } catch (error: any) {
-    console.error("Image generation error:", error);
+    console.error("❌ Image generation error:", error);
     throw new Error(`Failed to generate image: ${error.message}`);
   }
 }

@@ -103,16 +103,56 @@ async function seed() {
   }
 
   // Phase 2 levels
-  for (let i = 1; i <= 5; i++) {
-    levels.push({
+  const phase2Levels = [
+    {
       phaseNumber: 2,
-      levelNumber: i,
-      name: `Image Generation Level ${i}`,
-      description: `Recreate the reference image using prompt engineering`,
-      referenceImage: '',
-      assets: ['placeholder asset 1', 'placeholder asset 2'],
+      levelNumber: 1,
+      name: 'Nature Scene Recreation',
+      description: 'Create a stunning nature scene that matches the reference image. Pay attention to lighting, composition, and natural elements.',
+      referenceImage: 'https://via.placeholder.com/800x600/4CAF50/FFFFFF?text=Nature+Reference+1',
+      assets: ['mountain', 'lake', 'forest', 'sunset lighting'],
       maxScore: 10
-    });
+    },
+    {
+      phaseNumber: 2,
+      levelNumber: 2,
+      name: 'Urban Architecture Challenge',
+      description: 'Design an urban cityscape with modern architecture. Focus on building styles, street layouts, and urban atmosphere.',
+      referenceImage: 'https://via.placeholder.com/800x600/2196F3/FFFFFF?text=Urban+Reference+2',
+      assets: ['skyscrapers', 'street lights', 'glass buildings', 'modern design'],
+      maxScore: 10
+    },
+    {
+      phaseNumber: 2,
+      levelNumber: 3,
+      name: 'Portrait Photography Style',
+      description: 'Create a professional portrait that captures the mood and style of the reference image. Consider lighting, expression, and background.',
+      referenceImage: 'https://via.placeholder.com/800x600/FF9800/FFFFFF?text=Portrait+Reference+3',
+      assets: ['professional lighting', 'neutral background', 'natural expression', 'shallow depth of field'],
+      maxScore: 10
+    },
+    {
+      phaseNumber: 2,
+      levelNumber: 4,
+      name: 'Fantasy World Creation',
+      description: 'Build a magical fantasy world with mystical elements. Incorporate fantasy creatures, magical effects, and otherworldly landscapes.',
+      referenceImage: 'https://via.placeholder.com/800x600/9C27B0/FFFFFF?text=Fantasy+Reference+4',
+      assets: ['dragon', 'castle', 'magical crystals', 'glowing effects', 'mystical forest'],
+      maxScore: 10
+    },
+    {
+      phaseNumber: 2,
+      levelNumber: 5,
+      name: 'Futuristic Sci-Fi Scene',
+      description: 'Design a cutting-edge futuristic scene with advanced technology. Include robots, space elements, and sci-fi aesthetics.',
+      referenceImage: 'https://via.placeholder.com/800x600/607D8B/FFFFFF?text=Sci-Fi+Reference+5',
+      assets: ['robots', 'holographic displays', 'neon lights', 'space station', 'advanced technology'],
+      maxScore: 10
+    }
+  ];
+
+  for (const level of phase2Levels) {
+    levels.push(level);
   }
 
   // Phase 3 level
