@@ -6,6 +6,7 @@ import { useAuthStore } from '@/store/authStore';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import Link from 'next/link';
+import ContestTime from '@/components/ContestTime';
 
 export default function TeamPage() {
   const router = useRouter();
@@ -34,6 +35,14 @@ export default function TeamPage() {
       return res.data.phases;
     },
     enabled: !!user,
+  });
+
+  const { data: contest } = useQuery({
+    queryKey: ['contest-info'],
+    queryFn: async () => {
+      const res = await api.get('/leaderboard');
+      return res.data.contest as { startTime: string; endTime: string; isActive?: boolean } | null;
+    },
   });
 
   if (!user || user.role !== 'TEAM') {
@@ -76,6 +85,8 @@ export default function TeamPage() {
       </header>
 
       {/* Main Content */}
+      <ContestTime contest={contest} />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 pb-12">
         <div className="grid md:grid-cols-3 gap-6">
           {/* Phase 1 */}
