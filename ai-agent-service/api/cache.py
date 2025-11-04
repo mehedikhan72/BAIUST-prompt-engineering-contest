@@ -5,7 +5,7 @@ from numpy.linalg import norm
 from collections import deque
 
 MAX_CACHE_SIZE = 200  # per level
-SIMILARITY_THRESHOLD = 0.87
+SIMILARITY_THRESHOLD = 0.95
 
 embedding_model = OpenAIEmbeddings()
 semantic_cache = {level: deque(maxlen=MAX_CACHE_SIZE) for level in ["ONE", "TWO", "THREE", "FOUR", "FIVE"]}
