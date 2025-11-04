@@ -2,12 +2,15 @@ import { Hono } from 'hono';
 import { User } from '../models/User.js';
 import { TeamProgress } from '../models/TeamProgress.js';
 import { Submission } from '../models/Submission.js';
+import { Contest } from '../models/Contest.js';
 
 const leaderboard = new Hono();
 
 // Public leaderboard (no auth required)
 leaderboard.get('/', async (c) => {
   try {
+    // Get contest info for countdown
+    const contest = await Contest.findOne({ isActive: true });
     const teams = await User.find({ role: 'TEAM' }).select('_id teamName');
     
     const leaderboardData = await Promise.all(
@@ -19,6 +22,7 @@ leaderboard.get('/', async (c) => {
             teamId: team._id,
             teamName: team.teamName,
             totalPenalty: 0,
+            problemsSolved: 0,
             completedLevels: [],
             phase1Completed: [],
             phase2Completed: [],
@@ -63,10 +67,14 @@ leaderboard.get('/', async (c) => {
           score: sub.judgeScore || 0
         }));
         
+        // Calculate total problems solved (ICPC style)
+        const problemsSolved = phase1Completed.length + phase2Completed.length + phase3Completed.length;
+        
         return {
           teamId: team._id,
           teamName: team.teamName,
           totalPenalty: progress.totalPenalty,
+          problemsSolved,
           completedLevels: progress.completedLevels,
           phase1Completed,
           phase2Completed,
@@ -78,19 +86,36 @@ leaderboard.get('/', async (c) => {
       })
     );
     
-    // Sort by penalty (ascending), then by last submission time (ascending)
+    // ICPC-style sorting:
+    // 1. Problems solved (descending) - most important
+    // 2. Total penalty (ascending) - lower penalty is better
+    // 3. Last submission time (ascending) - earlier submission wins tie
     leaderboardData.sort((a, b) => {
+      // Primary: Number of problems solved (more is better)
+      if (a.problemsSolved !== b.problemsSolved) {
+        return b.problemsSolved - a.problemsSolved;
+      }
+      
+      // Secondary: Total penalty (less is better)
       if (a.totalPenalty !== b.totalPenalty) {
         return a.totalPenalty - b.totalPenalty;
       }
       
+      // Tertiary: Last submission time (earlier is better for tie-breaking)
       if (!a.lastSubmissionTime) return 1;
       if (!b.lastSubmissionTime) return -1;
       
       return new Date(a.lastSubmissionTime).getTime() - new Date(b.lastSubmissionTime).getTime();
     });
     
-    return c.json({ leaderboard: leaderboardData });
+    return c.json({ 
+      leaderboard: leaderboardData,
+      contest: contest ? {
+        startTime: contest.startTime,
+        endTime: contest.endTime,
+        isActive: contest.isActive
+      } : null
+    });
   } catch (error: any) {
     console.error('Leaderboard error:', error);
     return c.json({ error: 'Failed to get leaderboard' }, 500);
