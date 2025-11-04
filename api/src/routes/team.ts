@@ -60,9 +60,18 @@ team.get('/phases/:phaseNumber/levels', async (c) => {
     
     // Filter to only show unlocked levels
     const levelsWithStatus = allLevels.map(level => {
-      const unlocked = progress.unlockedLevels.some(
-        ul => ul.phase === phaseNumber && ul.level === level.levelNumber
-      );
+      let unlocked = false;
+      
+      // Phase 2: All levels are unlocked if phase is unlocked
+      if (phaseNumber === 2) {
+        unlocked = true;
+      } else {
+        // Other phases: Check individual level unlock status
+        unlocked = progress.unlockedLevels.some(
+          ul => ul.phase === phaseNumber && ul.level === level.levelNumber
+        );
+      }
+      
       const completed = progress.completedLevels.some(
         cl => cl.phase === phaseNumber && cl.level === level.levelNumber
       );

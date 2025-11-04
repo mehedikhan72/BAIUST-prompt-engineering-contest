@@ -27,15 +27,15 @@ async function seed() {
   // Create sample team
   const teamPassword = await bcrypt.hash('team123', 10);
   await User.findOneAndUpdate(
-    { email: 'team1@contest.com' },
+    { email: 'team123@contest.com' },
     {
-      email: 'team1@contest.com',
+      email: 'team123@contest.com',
       password: teamPassword,
       role: 'TEAM',
-      teamName: 'Team Alpha',
+      teamName: 'Team Beta',
       participants: [
-        { name: 'Alice Smith', email: 'alice@example.com' },
-        { name: 'Bob Johnson', email: 'bob@example.com' }
+        { name: 'Charlie Brown', email: 'charlie@example.com' },
+        { name: 'Diana Prince', email: 'diana@example.com' }
       ],
       createdAt: new Date()
     },
@@ -69,13 +69,13 @@ async function seed() {
       phaseNumber: 2,
       name: 'Reverse Prompt Engineering',
       description: 'Craft prompts to recreate reference images',
-      unlockCriteria: 'Complete Phase 1 Level 3'
+      unlockCriteria: 'Complete Phase 1 Level 3 (All levels unlocked)'
     },
     {
       phaseNumber: 3,
       name: 'Build-Your-Own RAG',
       description: 'Build a functional RAG system',
-      unlockCriteria: 'Complete Phase 2'
+      unlockCriteria: 'Complete Phase 2 Level 3'
     }
   ];
 

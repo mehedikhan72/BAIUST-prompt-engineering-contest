@@ -6,7 +6,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "seed": "tsx src/scripts/seed.ts"
+    "seed": "tsx src/scripts/seed.ts",
+    "fix-phase2": "tsx src/scripts/fixPhase2Unlock.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",

@@ -1,13 +1,22 @@
 import { TeamProgress } from '../models/TeamProgress.js';
-import { PHASE_1_LEVELS } from '../utils/constants.js';
+import { PHASE_1_LEVELS, PHASE_2_LEVELS } from '../utils/constants.js';
 import { Types } from 'mongoose';
 
 export async function unlockNextLevel(teamId: string | Types.ObjectId, phase: number, currentLevel: number) {
+  console.log(`🎮 Unlock function called: Team ${teamId}, Phase ${phase}, Level ${currentLevel}`);
+  
   const progress = await TeamProgress.findOne({ teamId });
   
   if (!progress) {
+    console.error(`❌ Team progress not found for team ${teamId}`);
     throw new Error('Team progress not found');
   }
+  
+  console.log(`📊 Current progress:`, {
+    unlockedPhases: progress.unlockedPhases,
+    unlockedLevels: progress.unlockedLevels,
+    completedLevels: progress.completedLevels
+  });
   
   // Mark current level as completed
   const alreadyCompleted = progress.completedLevels.some(
@@ -51,27 +60,36 @@ export async function unlockNextLevel(teamId: string | Types.ObjectId, phase: nu
       }
     }
     
-    // If completed level 3, unlock Phase 2
+    // If completed level 3, unlock Phase 2 (all levels)
     if (currentLevel === 3) {
       const phase2Unlocked = progress.unlockedPhases.includes(2);
+      console.log(`🔓 Phase 1 Level 3 completed! Phase 2 already unlocked: ${phase2Unlocked}`);
       
       if (!phase2Unlocked) {
+        // Unlock all Phase 2 levels (1-5)
+        const phase2Levels = [];
+        for (let i = 1; i <= PHASE_2_LEVELS; i++) {
+          phase2Levels.push({ phase: 2, level: i });
+        }
+        
+        console.log(`🚀 Unlocking Phase 2 with levels:`, phase2Levels);
+        
         await TeamProgress.findOneAndUpdate(
           { teamId },
           {
             $push: {
               unlockedPhases: 2,
-              unlockedLevels: { phase: 2, level: 1 }
+              unlockedLevels: { $each: phase2Levels }
             }
           }
         );
+        
+        console.log(`✅ Phase 2 unlocked successfully for team ${teamId}`);
       }
     }
   } else if (phase === 2) {
-    // Phase 2: Unlock Phase 3 when completed
-    const phase2Completed = progress.completedLevels.filter(cl => cl.phase === 2).length;
-    
-    if (phase2Completed >= 5 && !progress.unlockedPhases.includes(3)) {
+    // Phase 2: Unlock Phase 3 when Level 3 is completed
+    if (currentLevel === 3 && !progress.unlockedPhases.includes(3)) {
       await TeamProgress.findOneAndUpdate(
         { teamId },
         {
@@ -97,7 +115,12 @@ export async function checkLevelAccess(teamId: string | Types.ObjectId, phase: n
     return false;
   }
   
-  // Check if level is unlocked
+  // Phase 2: All levels are accessible if phase is unlocked
+  if (phase === 2) {
+    return level >= 1 && level <= PHASE_2_LEVELS;
+  }
+  
+  // For other phases: Check if specific level is unlocked
   const levelUnlocked = progress.unlockedLevels.some(
     ul => ul.phase === phase && ul.level === level
   );
