@@ -48,6 +48,7 @@ async def process_prompt(prompt: str, level: str):
             guardrail_result = topical_guardrail_task.result()
             if "not_allowed" in guardrail_result.lower():
                 llm_response_task.cancel()
+                await cache_response(prompt, "Your prompt is not relevant to the game.", level)
                 print("Prompt blocked by topical guardrail")
                 return {"error": "Your prompt is not relevant to the game."}
             elif llm_response_task in done:
