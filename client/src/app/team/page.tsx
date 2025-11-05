@@ -173,7 +173,7 @@ export default function TeamPage() {
               </div>
             ) : (
               <div className="text-center py-4">
-                <p className="text-sm text-slate-500 dark:text-slate-400">🔒 Complete Phase 1 Level 3</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">🔒 Complete Phase 1 Level 5</p>
               </div>
             )}
           </div>

@@ -7,7 +7,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "seed": "tsx src/scripts/seed.ts",
-    "fix-phase2": "tsx src/scripts/fixPhase2Unlock.ts"
+    "fix-phase2": "tsx src/scripts/fixPhase2Unlock.ts",
+    "unlock-phase1": "tsx src/scripts/unlockPhase1Levels.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.7",

@@ -60,10 +60,10 @@ export async function unlockNextLevel(teamId: string | Types.ObjectId, phase: nu
       }
     }
     
-    // If completed level 3, unlock Phase 2 (all levels)
-    if (currentLevel === 3) {
+    // If completed level 5, unlock Phase 2 (all levels)
+    if (currentLevel === 5) {
       const phase2Unlocked = progress.unlockedPhases.includes(2);
-      console.log(`🔓 Phase 1 Level 3 completed! Phase 2 already unlocked: ${phase2Unlocked}`);
+      console.log(`🔓 Phase 1 Level 5 completed! Phase 2 already unlocked: ${phase2Unlocked}`);
       
       if (!phase2Unlocked) {
         // Unlock all Phase 2 levels (1-5)

@@ -85,7 +85,7 @@ async function seed() {
       phaseNumber: 2,
       name: 'Reverse Prompt Engineering',
       description: 'Craft prompts to recreate reference images',
-      unlockCriteria: 'Complete Phase 1 Level 3 (All levels unlocked)'
+      unlockCriteria: 'Complete Phase 1 Level 5 (All levels unlocked)'
     },
     {
       phaseNumber: 3,
@@ -248,12 +248,16 @@ async function seedTeamsFromJson() {
 
         const savedUser = await teamUser.save();
 
-        // Create initial team progress (unlocked Phase 1, Level 1)
+        // Create initial team progress (unlocked Phase 1, Levels 1-5)
         const teamProgress = new TeamProgress({
           teamId: savedUser._id,
           unlockedPhases: [1],
           unlockedLevels: [
-            { phase: 1, level: 1 }
+            { phase: 1, level: 1 },
+            { phase: 1, level: 2 },
+            { phase: 1, level: 3 },
+            { phase: 1, level: 4 },
+            { phase: 1, level: 5 }
           ],
           completedLevels: [],
           totalPenalty: 0,
