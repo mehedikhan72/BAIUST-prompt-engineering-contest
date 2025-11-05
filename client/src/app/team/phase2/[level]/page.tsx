@@ -55,6 +55,16 @@ export default function Phase2LevelPage() {
     },
   });
 
+  const { data: contest } = useQuery({
+    queryKey: ['contest-info'],
+    queryFn: async () => {
+      const res = await api.get('/leaderboard');
+      return res.data.contest as { startTime: string; endTime: string } | null;
+    },
+    refetchInterval: 10000,
+  });
+  const contestEnded = !!contest && Date.now() >= new Date(contest.endTime).getTime();
+
   const generateImage = useMutation({
     mutationFn: async (promptText: string) => {
       const formData = new FormData();
@@ -174,8 +184,8 @@ export default function Phase2LevelPage() {
   };
 
   const latestSubmission = submissions?.[0];
-  const canSubmit = !latestSubmission || 
-    (latestSubmission.status === 'JUDGED' && latestSubmission.canResubmit);
+  const canSubmit = (!latestSubmission || 
+    (latestSubmission.status === 'JUDGED' && latestSubmission.canResubmit)) && !contestEnded;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -466,7 +476,7 @@ export default function Phase2LevelPage() {
                   </div>
                   <button
                     onClick={() => submitImage.mutate()}
-                    disabled={submitImage.isPending || generateImage.isPending}
+                    disabled={submitImage.isPending || generateImage.isPending || !canSubmit}
                     className="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                   >
                     {submitImage.isPending ? 'Submitting for Judgement...' : '📝 Submit for Judgement'}

@@ -35,6 +35,16 @@ export default function Phase1LevelPage() {
     },
   });
 
+  const { data: contest } = useQuery({
+    queryKey: ['contest-info'],
+    queryFn: async () => {
+      const res = await api.get('/leaderboard');
+      return res.data.contest as { startTime: string; endTime: string } | null;
+    },
+    refetchInterval: 10000,
+  });
+  const contestEnded = !!contest && Date.now() >= new Date(contest.endTime).getTime();
+
   const sendPrompt = useMutation({
     mutationFn: async (promptText: string) => {
       // Check for duplicate prompt
@@ -177,7 +187,7 @@ export default function Phase1LevelPage() {
                   }
                 }
               }}
-              disabled={sendPrompt.isPending}
+              disabled={sendPrompt.isPending || contestEnded}
             />
             {/* Controls */}
             <div className="flex justify-end mt-4">
@@ -190,7 +200,7 @@ export default function Phase1LevelPage() {
                     setPrompt("");
                   }
                 }}
-                disabled={sendPrompt.isPending || !prompt.trim()}
+                disabled={sendPrompt.isPending || !prompt.trim() || contestEnded}
                 className={`flex items-center justify-center w-10 h-10 rounded-lg transition-colors duration-200 ${
                   prompt.trim() 
                     ? 'bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900' 
@@ -221,11 +231,11 @@ export default function Phase1LevelPage() {
               onChange={(e) => setGuess(e.target.value)}
               placeholder="Enter your password guess..."
               className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition-all duration-200"
-              disabled={sendGuess.isPending}
+              disabled={sendGuess.isPending || contestEnded}
             />
             <button
               type="submit"
-              disabled={sendGuess.isPending || !guess.trim()}
+              disabled={sendGuess.isPending || !guess.trim() || contestEnded}
               className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {sendGuess.isPending ? "Submitting..." : "Submit Guess"}

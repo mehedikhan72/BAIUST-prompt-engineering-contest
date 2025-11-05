@@ -18,12 +18,20 @@ import {
   addCorrectGuessPenalty, 
   addWrongGuessPenalty 
 } from '../services/penalty.js';
+import { Contest } from '../models/Contest.js';
 
 const team = new Hono();
 
 // Apply auth and team role to all routes
 team.use('/*', authMiddleware);
 team.use('/*', requireRole('TEAM'));
+
+async function contestHasEnded(): Promise<boolean> {
+  const contest = await Contest.findOne({ isActive: true });
+  if (!contest) return false;
+  const now = new Date();
+  return now.getTime() >= contest.endTime.getTime();
+}
 
 // ===== Get Phases with Unlock Status =====
 team.get('/phases', async (c) => {
@@ -96,6 +104,9 @@ team.get('/phases/:phaseNumber/levels', async (c) => {
 // ===== Phase 1: Prompt (proxy to ai-agent-service) =====
 team.post('/phase1/:levelNumber/prompt', async (c) => {
   try {
+    if (await contestHasEnded()) {
+      return c.json({ error: 'Contest has ended' }, 403);
+    }
     const user = c.get('user');
     const levelNumber = parseInt(c.req.param('levelNumber'));
     const { prompt } = await c.req.json();
@@ -148,6 +159,9 @@ team.post('/phase1/:levelNumber/prompt', async (c) => {
 // ===== Phase 1: Guess (proxy to ai-agent-service) =====
 team.post('/phase1/:levelNumber/guess', async (c) => {
   try {
+    if (await contestHasEnded()) {
+      return c.json({ error: 'Contest has ended' }, 403);
+    }
     const user = c.get('user');
     const levelNumber = parseInt(c.req.param('levelNumber'));
     const { guess } = await c.req.json();
@@ -220,6 +234,9 @@ team.post('/phase1/:levelNumber/guess', async (c) => {
 // ===== Phase 2: Generate Image with Progress Updates =====
 team.post('/phase2/:levelNumber/generate', async (c) => {
   try {
+    if (await contestHasEnded()) {
+      return c.json({ error: 'Contest has ended' }, 403);
+    }
     const user = c.get('user');
     const levelNumber = parseInt(c.req.param('levelNumber'));
     const body = await c.req.parseBody();
@@ -294,6 +311,9 @@ team.post('/phase2/:levelNumber/generate', async (c) => {
 // ===== Phase 2: Upload Image =====
 team.post('/phase2/:levelNumber/upload', async (c) => {
   try {
+    if (await contestHasEnded()) {
+      return c.json({ error: 'Contest has ended' }, 403);
+    }
     const user = c.get('user');
     const levelNumber = parseInt(c.req.param('levelNumber'));
     const body = await c.req.parseBody();
@@ -338,6 +358,9 @@ team.post('/phase2/:levelNumber/upload', async (c) => {
 // ===== Phase 2: Submit =====
 team.post('/phase2/:levelNumber/submit', async (c) => {
   try {
+    if (await contestHasEnded()) {
+      return c.json({ error: 'Contest has ended' }, 403);
+    }
     const user = c.get('user');
     const levelNumber = parseInt(c.req.param('levelNumber'));
     const { prompt, imageUrl } = await c.req.json();
@@ -410,6 +433,9 @@ team.post('/phase2/:levelNumber/submit', async (c) => {
 // ===== Phase 3: Submit =====
 team.post('/phase3/submit', async (c) => {
   try {
+    if (await contestHasEnded()) {
+      return c.json({ error: 'Contest has ended' }, 403);
+    }
     const user = c.get('user');
     const body = await c.req.parseBody();
     

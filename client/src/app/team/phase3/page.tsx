@@ -28,6 +28,15 @@ export default function Phase3Page() {
     },
   });
 
+  const { data: contest } = useQuery({
+    queryKey: ['contest-info'],
+    queryFn: async () => {
+      const res = await api.get('/leaderboard');
+      return res.data.contest as { startTime: string; endTime: string } | null;
+    },
+    refetchInterval: 10000,
+  });
+
   const submitPhase3 = useMutation({
     mutationFn: async (formData: FormData) => {
       const res = await api.post('/team/phase3/submit', formData, {
@@ -63,8 +72,9 @@ export default function Phase3Page() {
   };
 
   const latestSubmission = submissions?.[0];
-  const canSubmit = !latestSubmission || 
-    (latestSubmission.status === 'JUDGED' && latestSubmission.canResubmit);
+  const contestEnded = !!contest && Date.now() >= new Date(contest.endTime).getTime();
+  const canSubmit = (!latestSubmission || 
+    (latestSubmission.status === 'JUDGED' && latestSubmission.canResubmit)) && !contestEnded;
 
   const { data: levelData } = useQuery({
     queryKey: ['phase3-level'],
