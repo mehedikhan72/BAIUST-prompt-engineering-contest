@@ -1,9 +1,25 @@
 import bcrypt from 'bcryptjs';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 import { connectDB } from '../db.js';
 import { User } from '../models/User.js';
 import { Contest } from '../models/Contest.js';
 import { Phase } from '../models/Phase.js';
 import { Level } from '../models/Level.js';
+import { TeamProgress } from '../models/TeamProgress.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+interface TeamData {
+  "Team Name": string;
+  "Participant 1": string;
+  "Participant 2": string;
+  "Email": string;
+  "Password": string;
+}
 
 async function seed() {
   await connectDB();
@@ -173,12 +189,102 @@ async function seed() {
   }
   console.log('✅ Levels created');
 
+  // Seed teams from teams.json
+  await seedTeamsFromJson();
+
   console.log('\n🎉 Database seeded successfully!');
   console.log('\n📝 Login credentials:');
   console.log('Judge: judge@contest.com / judge123');
-  console.log('Team: team1@contest.com / team123');
+  console.log('Sample Team: team123@contest.com / team123');
 
   process.exit(0);
+}
+
+async function seedTeamsFromJson() {
+  try {
+    console.log('\n🏢 Seeding teams from teams.json...');
+    
+    // Read teams.json file
+    const teamsPath = path.join(__dirname, '../../data/teams.json');
+    
+    if (!fs.existsSync(teamsPath)) {
+      console.log('⚠️  teams.json file not found, skipping team seeding');
+      return;
+    }
+
+    const teamsData: TeamData[] = JSON.parse(fs.readFileSync(teamsPath, 'utf8'));
+    console.log(`📂 Found ${teamsData.length} teams in teams.json`);
+
+    let createdCount = 0;
+    let skippedCount = 0;
+    let errorCount = 0;
+
+    for (const teamData of teamsData) {
+      try {
+        const email = teamData.Email.toLowerCase().trim();
+        
+        // Check if team already exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+          console.log(`⚠️  Team "${teamData['Team Name']}" already exists (${email})`);
+          skippedCount++;
+          continue;
+        }
+
+        // Hash password
+        const hashedPassword = await bcrypt.hash(teamData.Password, 10);
+
+        // Create team user
+        const teamUser = new User({
+          email: email,
+          password: hashedPassword,
+          role: 'TEAM',
+          teamName: teamData['Team Name'],
+          participants: [
+            { name: teamData['Participant 1'], email: email },
+            { name: teamData['Participant 2'], email: email }
+          ]
+        });
+
+        const savedUser = await teamUser.save();
+
+        // Create initial team progress (unlocked Phase 1, Level 1)
+        const teamProgress = new TeamProgress({
+          teamId: savedUser._id,
+          unlockedPhases: [1],
+          unlockedLevels: [
+            { phase: 1, level: 1 }
+          ],
+          completedLevels: [],
+          totalPenalty: 0,
+          wrongAttempts: []
+        });
+
+        await teamProgress.save();
+
+        console.log(`✅ Created team: "${teamData['Team Name']}" (${email})`);
+        createdCount++;
+
+      } catch (error: any) {
+        console.error(`❌ Error creating team "${teamData['Team Name']}":`, error.message);
+        errorCount++;
+      }
+    }
+
+    // Summary
+    console.log('\n📊 Team Seeding Summary:');
+    console.log(`✅ Teams created: ${createdCount}`);
+    console.log(`⚠️  Teams skipped (already exist): ${skippedCount}`);
+    console.log(`❌ Errors: ${errorCount}`);
+    console.log(`📝 Total teams in JSON: ${teamsData.length}`);
+
+    if (createdCount > 0) {
+      console.log('🎉 Teams seeded successfully!');
+    }
+
+  } catch (error: any) {
+    console.error('💥 Error seeding teams:', error.message);
+  }
 }
 
 seed().catch((error) => {
