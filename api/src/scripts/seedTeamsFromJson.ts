@@ -18,7 +18,7 @@ async function seedTeamsFromJson() {
     // Try multiple MongoDB connection strings
     const connectionStrings = [
       process.env.MONGODB_URI,
-      'mongodb://admin:password@mongo:27017/contest?authSource=admin',
+      'mongodb://admin:password@localhost:27017/contest?authSource=admin',
       'mongodb://mongo:27017/contest',
       'mongodb://admin:password@mongo:27017/contest?authSource=admin',
       'mongodb://localhost:27017/contest',
