@@ -20,7 +20,6 @@ async def get_available_models(request: Request):
 
 
 @router.post("/process-prompt/")
-@limiter.limit("5/minute")
 async def process_prompt_endpoint(prompt: str, level: str, request: Request):
     try:
         level = level.upper()
@@ -32,7 +31,6 @@ async def process_prompt_endpoint(prompt: str, level: str, request: Request):
         raise HTTPException(status_code=500, detail=str(e))
     
 @router.post("/process-guess/")
-@limiter.limit("5/minute")
 async def process_guess_endpoint(guess: str, level: str, request: Request):
     try:
         level = level.upper()
