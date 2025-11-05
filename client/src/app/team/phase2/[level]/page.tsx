@@ -17,16 +17,10 @@ export default function Phase2LevelPage() {
   const [prompt, setPrompt] = useState('');
   const [generatedImageUrl, setGeneratedImageUrl] = useState('');
   
-  // Reference image for AI generation
+  // Reference image for AI guidance
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
   const [referencePreviewUrl, setReferencePreviewUrl] = useState('');
-  const [referenceImageUrl, setReferenceImageUrl] = useState('');
   const referenceInputRef = useRef<HTMLInputElement>(null);
-  
-  // User assets upload
-  const [userAssets, setUserAssets] = useState<File[]>([]);
-  const [userAssetPreviews, setUserAssetPreviews] = useState<string[]>([]);
-  const userAssetsInputRef = useRef<HTMLInputElement>(null);
   
   // Error state
   const [error, setError] = useState('');
@@ -46,13 +40,14 @@ export default function Phase2LevelPage() {
   });
 
   const { data: submissions } = useQuery({
-    queryKey: ['team-submissions'],
+    queryKey: ['team-submissions', level],
     queryFn: async () => {
       const res = await api.get('/team/submissions');
       return res.data.submissions.filter(
         (s: any) => s.phaseNumber === 2 && s.levelNumber === level
       );
     },
+    refetchInterval: 3000, // Refresh to show updated submission status
   });
 
   const generateImage = useMutation({
@@ -60,15 +55,10 @@ export default function Phase2LevelPage() {
       const formData = new FormData();
       formData.append('prompt', promptText);
       
-      // Add reference image if uploaded
+      // Add reference image if provided
       if (referenceFile) {
         formData.append('referenceImage', referenceFile);
       }
-      
-      // Add user assets
-      userAssets.forEach((asset, index) => {
-        formData.append(`asset_${index}`, asset);
-      });
       
       const res = await api.post(`/team/phase2/${level}/generate`, formData, {
         headers: {
@@ -96,15 +86,15 @@ export default function Phase2LevelPage() {
       return res.data;
     },
     onSuccess: () => {
-      alert('Submission sent for judging!');
+      alert(`🎉 Level ${level} submission sent for judging! You can now work on other levels while waiting.`);
       setPrompt('');
       setGeneratedImageUrl('');
       setReferenceFile(null);
       setReferencePreviewUrl('');
-      setUserAssets([]);
-      setUserAssetPreviews([]);
       setError('');
-      router.push('/team');
+      
+      // Refresh the page to show updated submission status
+      window.location.reload();
     },
   });
 
@@ -138,44 +128,19 @@ export default function Phase2LevelPage() {
     }
   };
 
-  const handleUserAssetsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length > 0) {
-      // Validate file size (10MB max per file)
-      const maxSize = 10 * 1024 * 1024;
-      const validFiles = files.filter(file => {
-        if (file.size > maxSize) {
-          alert(`File ${file.name} exceeds 10MB limit.`);
-          return false;
-        }
-        return true;
-      });
-      
-      setUserAssets(prev => [...prev, ...validFiles]);
-      
-      // Create preview URLs for images
-      validFiles.forEach(file => {
-        if (file.type.startsWith('image/')) {
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setUserAssetPreviews(prev => [...prev, reader.result as string]);
-          };
-          reader.readAsDataURL(file);
-        } else {
-          setUserAssetPreviews(prev => [...prev, '']);
-        }
-      });
-    }
-  };
+  // Unused - removed user assets functionality
+  // const handleUserAssetsChange = () => {};
+  // const removeUserAsset = () => {};
 
-  const removeUserAsset = (index: number) => {
-    setUserAssets(prev => prev.filter((_, i) => i !== index));
-    setUserAssetPreviews(prev => prev.filter((_, i) => i !== index));
-  };
+  // Get the actual latest submission (sorted by date)
+  const sortedSubmissions = submissions?.sort((a: any, b: any) => 
+    new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
+  );
+  const latestSubmission = sortedSubmissions?.[0];
 
-  const latestSubmission = submissions?.[0];
-  const canSubmit = !latestSubmission || 
-    (latestSubmission.status === 'JUDGED' && latestSubmission.canResubmit);
+  // Determine if user can submit for THIS specific level
+  const canSubmit = !latestSubmission || // No submission yet - can submit
+    (latestSubmission.status === 'JUDGED' && latestSubmission.canResubmit); // Judged and allows resubmission
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -271,105 +236,73 @@ export default function Phase2LevelPage() {
               )}
 
               {/* User Assets Upload */}
-              <div>
-                <p className="text-sm font-semibold mb-3 text-slate-900 dark:text-slate-100">📎 Upload Your Assets:</p>
-                <input
-                  ref={userAssetsInputRef}
-                  type="file"
-                  accept="image/*,audio/*,video/*,.pdf,.doc,.docx,.txt"
-                  multiple
-                  onChange={handleUserAssetsChange}
-                  className="hidden"
-                />
-                <button
-                  onClick={() => userAssetsInputRef.current?.click()}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg border border-slate-200 dark:border-slate-700 transition-colors duration-200"
-                >
-                  <Upload size={20} />
-                  <span>{userAssets.length > 0 ? `${userAssets.length} files selected` : 'Upload Assets'}</span>
-                </button>
-                
-                {/* User Assets Preview */}
-                {userAssets.length > 0 && (
-                  <div className="mt-4 space-y-2">
-                    {userAssets.map((file, i) => (
-                      <div key={i} className="flex items-center justify-between p-2 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                        <div className="flex items-center gap-2">
-                          <div className="w-8 h-8 bg-slate-200 dark:bg-slate-700 rounded flex items-center justify-center">
-                            <span className="text-xs font-bold text-slate-600 dark:text-slate-400">
-                              {file.name.split('.').pop()?.toUpperCase()}
-                            </span>
-                          </div>
-                          <span className="text-sm text-slate-700 dark:text-slate-300 truncate">
-                            {file.name}
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => removeUserAsset(i)}
-                          className="text-red-500 hover:text-red-700 p-1"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
             </div>
           </div>
 
-          {/* Right Side - Prompt & Generation */}
+          {/* Right Side - Simplified Interface */}
           <div className="space-y-6">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-6">
-              <h3 className="font-bold mb-4 text-slate-900 dark:text-slate-100">Image Generation</h3>
+              <h3 className="font-bold mb-6 text-slate-900 dark:text-slate-100">Create Your Solution</h3>
               
               {/* Error Display */}
               {error && (
-                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3.5 rounded-xl mb-4">
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3.5 rounded-xl mb-6">
                   {error}
                 </div>
               )}
             
-            {!canSubmit && latestSubmission?.status === 'PENDING' && (
-              <div className="mb-4 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
-                <p className="text-sm text-amber-800 dark:text-amber-200">
-                  ⏳ You have a pending submission waiting for judgement.
-                </p>
-              </div>
-            )}
+              {!canSubmit && latestSubmission?.status === 'PENDING' && (
+                <div className="mb-6 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    ⏳ You have a pending submission for <strong>Level {level}</strong> waiting for judgement. You can work on other levels while waiting!
+                  </p>
+                </div>
+              )}
 
-            {!canSubmit && latestSubmission?.status === 'JUDGED' && !latestSubmission.canResubmit && (
-              <div className="mb-4 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl">
-                <p className="text-sm text-red-800 dark:text-red-200">
-                  ❌ Resubmission not allowed. Score: {latestSubmission.judgeScore}/{levelData?.maxScore || 10}
-                </p>
-              </div>
-            )}
+              {!canSubmit && latestSubmission?.status === 'JUDGED' && !latestSubmission.canResubmit && (
+                <div className="mb-6 p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl">
+                  <p className="text-sm text-red-800 dark:text-red-200">
+                    ❌ Resubmission not allowed for <strong>Level {level}</strong>. Score: {latestSubmission.judgeScore}/{levelData?.maxScore || 10}
+                  </p>
+                  <p className="text-xs mt-2 text-red-700 dark:text-red-300">
+                    You can continue working on other Phase 2 levels.
+                  </p>
+                </div>
+              )}
 
-              {/* Reference Image Upload (Optional - for AI generation) */}
-              <div className={`mb-4 p-4 rounded-xl border ${
-                referenceFile 
-                  ? 'bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800' 
-                  : 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800'
-              }`}>
-                <h4 className={`text-sm font-semibold mb-2 ${
-                  referenceFile 
-                    ? 'text-green-900 dark:text-green-100' 
-                    : 'text-blue-900 dark:text-blue-100'
-                }`}>
-                  {referenceFile ? '✅ Reference Image Ready' : '💡 Optional: Upload Reference Image'}
-                </h4>
-                <p className={`text-xs mb-3 ${
-                  referenceFile 
-                    ? 'text-green-700 dark:text-green-300' 
-                    : 'text-blue-700 dark:text-blue-300'
-                }`}>
-                  {referenceFile 
-                    ? 'Reference image will be sent directly to AI for generation.' 
-                    : 'Upload a reference image to guide the AI generation (directly to GPT)'
-                  }
+              {latestSubmission?.status === 'JUDGED' && latestSubmission.judgeScore && latestSubmission.judgeScore >= Math.ceil((levelData?.maxScore || 10) * 0.1) && (
+                <div className="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                  <p className="text-sm text-emerald-800 dark:text-emerald-200">
+                    🎉 <strong>Level {level} Completed!</strong> Score: {latestSubmission.judgeScore}/{levelData?.maxScore || 10}
+                  </p>
+                  <p className="text-xs mt-2 text-emerald-700 dark:text-emerald-300">
+                    This level is marked as completed. Check your team dashboard!
+                  </p>
+                </div>
+              )}
+
+              {/* 1. Prompt Text */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold mb-3 text-slate-900 dark:text-slate-100">
+                  ✍️ Prompt Text
+                </label>
+                <textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Describe the image you want to generate..."
+                  rows={4}
+                  className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition-all duration-200"
+                  disabled={!canSubmit}
+                />
+              </div>
+
+              {/* 2. Reference Image */}
+              <div className="mb-6">
+                <label className="block text-sm font-semibold mb-3 text-slate-900 dark:text-slate-100">
+                  🖼️ Reference Image {referenceFile && '(1 image)'}
+                </label>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+                  Upload a reference image to guide the AI generation (optional)
                 </p>
                 
                 <input
@@ -378,26 +311,37 @@ export default function Phase2LevelPage() {
                   accept="image/jpeg,image/jpg,image/png,image/webp"
                   onChange={handleReferenceFileChange}
                   className="hidden"
-                  disabled={!canSubmit}
                 />
                 
                 <button
                   onClick={() => referenceInputRef.current?.click()}
                   disabled={!canSubmit}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-medium rounded-lg border border-slate-200 dark:border-slate-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed mb-2"
+                  className={`w-full flex items-center justify-center gap-3 px-4 py-4 font-medium rounded-lg border-2 border-dashed transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    referenceFile 
+                      ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300'
+                      : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border-slate-300 dark:border-slate-600'
+                  }`}
                 >
-                  <ImageIcon size={20} />
-                  <span>{referenceFile ? referenceFile.name : 'Choose Reference Image'}</span>
+                  <Upload size={24} />
+                  <div className="text-center">
+                    <div className="font-semibold">
+                      {referenceFile ? referenceFile.name : 'Choose Reference Image'}
+                    </div>
+                    <div className="text-xs opacity-75">
+                      {referenceFile ? 'Click to change' : 'JPG, PNG, WEBP - Max 10MB'}
+                    </div>
+                  </div>
                 </button>
 
+                {/* Reference Image Preview */}
                 {referencePreviewUrl && (
-                  <div className="mt-3">
-                    <div className="relative w-full h-32 bg-slate-100 dark:bg-slate-800 rounded-lg mb-2 border border-slate-200 dark:border-slate-700">
+                  <div className="mt-4">
+                    <div className="relative w-full h-48 bg-slate-100 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
                       <Image
                         src={referencePreviewUrl}
                         alt="Reference Preview"
                         fill
-                        className="object-contain rounded-lg"
+                        className="object-contain"
                       />
                     </div>
                     <button
@@ -405,58 +349,48 @@ export default function Phase2LevelPage() {
                         setReferenceFile(null);
                         setReferencePreviewUrl('');
                       }}
-                      className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors duration-200"
+                      className="mt-2 w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
                     >
-                      Remove Reference
+                      Remove Reference Image
                     </button>
                   </div>
                 )}
               </div>
 
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Write your prompt to recreate the reference image..."
-              rows={6}
-              className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-lg mb-4 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 placeholder-slate-500 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-400 dark:focus:ring-slate-600 transition-all duration-200"
-              disabled={!canSubmit}
-            />
-
+              {/* 3. Generate Button */}
               <button
                 onClick={() => generateImage.mutate(prompt)}
                 disabled={generateImage.isPending || !prompt.trim() || !canSubmit}
-                className="w-full px-4 py-2.5 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 font-medium rounded-lg mb-4 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="w-full px-6 py-4 bg-slate-900 dark:bg-slate-100 hover:bg-slate-800 dark:hover:bg-slate-200 text-white dark:text-slate-900 font-semibold rounded-lg mb-6 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-lg"
               >
                 {generateImage.isPending 
                   ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white dark:text-slate-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <span className="flex items-center justify-center gap-3">
+                      <svg className="animate-spin -ml-1 mr-3 h-6 w-6 text-white dark:text-slate-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Generating...
+                      Generating Output...
                     </span>
                   )
-                  : referenceFile 
-                    ? '🎨 Generate with Reference (gpt-image-1)' 
-                    : '✨ Generate Image (dall-e-3)'
+                  : '🚀 Generate Output'
                 }
               </button>
               
               {/* Loading Message */}
               {generateImage.isPending && (
-                <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
                   <p className="text-sm text-blue-800 dark:text-blue-200 text-center">
-                    🎨 Creating your image... This may take 30-60 seconds depending on complexity.
+                    🎨 {referenceFile ? 'Generating with reference image guidance...' : 'Creating your image...'} This may take 30-60 seconds.
                   </p>
                 </div>
               )}
 
-
+              {/* 4. Generated Output & Submit */}
               {generatedImageUrl && (
-                <div>
-                  <p className="text-sm font-semibold mb-3 text-slate-900 dark:text-slate-100">Generated Image:</p>
-                  <div className="relative w-full h-64 bg-slate-100 dark:bg-slate-800 rounded-lg mb-4 border border-slate-200 dark:border-slate-700">
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-6">
+                  <h4 className="text-sm font-semibold mb-4 text-slate-900 dark:text-slate-100">✨ Generated Output:</h4>
+                  <div className="relative w-full h-80 bg-slate-100 dark:bg-slate-800 rounded-lg mb-6 border border-slate-200 dark:border-slate-700">
                     <Image
                       src={generatedImageUrl}
                       alt="Generated"
@@ -467,9 +401,9 @@ export default function Phase2LevelPage() {
                   <button
                     onClick={() => submitImage.mutate()}
                     disabled={submitImage.isPending || generateImage.isPending}
-                    className="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                    className="w-full px-6 py-4 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-lg"
                   >
-                    {submitImage.isPending ? 'Submitting for Judgement...' : '📝 Submit for Judgement'}
+                    {submitImage.isPending ? 'Submitting...' : '📝 Submit for Judgement'}
                   </button>
                 </div>
               )}

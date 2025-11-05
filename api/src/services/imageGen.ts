@@ -76,7 +76,7 @@ export async function generateImage(
 
     if (referenceImageBuffer) {
       // Path 1: WITH reference image - use gpt-image-1 for editing
-      console.log('🖼️ Using reference image with gpt-image-1');
+      console.log('🖼️ Using reference image with gpt-image-1 (editing)');
       const imageFile = await toFile(referenceImageBuffer, "reference.png", { type: "image/png" });
 
       response = await openai.images.edit({
@@ -85,10 +85,10 @@ export async function generateImage(
         prompt: fullPrompt,
       });
     } else {
-      // Path 2: WITHOUT reference image - use dall-e-3 for generation
-      console.log('✨ Generating new image with dall-e-3');
+      // Path 2: WITHOUT reference image - use gpt-image-1 for generation
+      console.log('✨ Generating new image with gpt-image-1');
       response = await openai.images.generate({
-        model: "dall-e-3",
+        model: "gpt-image-1",
         prompt: fullPrompt,
         n: 1,
         size: "1024x1024",

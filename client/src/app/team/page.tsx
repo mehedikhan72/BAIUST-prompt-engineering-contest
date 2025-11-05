@@ -26,6 +26,8 @@ export default function TeamPage() {
       return res.data.progress;
     },
     enabled: !!user,
+    refetchInterval: 5000, // Auto-refresh every 5 seconds to show real-time progress
+    staleTime: 0, // Always consider data stale to ensure fresh updates
   });
 
   const { data: phasesData } = useQuery({
@@ -194,7 +196,7 @@ export default function TeamPage() {
               </Link>
             ) : (
               <div className="text-center py-4">
-                <p className="text-sm text-slate-500 dark:text-slate-400">🔒 Complete Phase 2</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">🔒 Complete 3/5 Phase 2 Levels</p>
               </div>
             )}
           </div>

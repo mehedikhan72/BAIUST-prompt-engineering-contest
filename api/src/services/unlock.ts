@@ -88,8 +88,15 @@ export async function unlockNextLevel(teamId: string | Types.ObjectId, phase: nu
       }
     }
   } else if (phase === 2) {
-    // Phase 2: Unlock Phase 3 when Level 3 is completed
-    if (currentLevel === 3 && !progress.unlockedPhases.includes(3)) {
+    // Phase 2: Unlock Phase 3 when 3/5 levels are completed
+    const updatedProgress = await TeamProgress.findOne({ teamId });
+    const phase2CompletedCount = updatedProgress?.completedLevels.filter(cl => cl.phase === 2).length || 0;
+    
+    console.log(`📊 Phase 2 progress: ${phase2CompletedCount}/5 levels completed`);
+    
+    if (phase2CompletedCount >= 3 && !updatedProgress?.unlockedPhases.includes(3)) {
+      console.log(`🎉 Phase 3 unlocked! Team ${teamId} completed ${phase2CompletedCount}/5 Phase 2 levels`);
+      
       await TeamProgress.findOneAndUpdate(
         { teamId },
         {
@@ -99,6 +106,8 @@ export async function unlockNextLevel(teamId: string | Types.ObjectId, phase: nu
           }
         }
       );
+      
+      console.log(`✅ Phase 3 unlocked successfully for team ${teamId}`);
     }
   }
 }

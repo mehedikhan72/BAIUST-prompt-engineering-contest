@@ -7,6 +7,7 @@ import { Phase } from '../models/Phase.js';
 import { Level } from '../models/Level.js';
 import { Submission } from '../models/Submission.js';
 import { applyJudgeBonus } from '../services/penalty.js';
+import { unlockNextLevel } from '../services/unlock.js';
 
 const judge = new Hono();
 
@@ -260,6 +261,26 @@ judge.put('/submissions/:submissionId/judge', async (c) => {
     submission.canResubmit = canResubmit || false;
     
     await submission.save();
+    
+    // Mark level as completed and trigger unlock logic for passing scores
+    const passingScore = Math.ceil(maxScore * 0.1); // 10% or higher is passing
+    if (score >= passingScore) {
+      console.log(`✅ Team ${submission.teamId} passed Phase ${submission.phaseNumber} Level ${submission.levelNumber} with score ${score}/${maxScore}`);
+      
+      try {
+        await unlockNextLevel(
+          submission.teamId,
+          submission.phaseNumber,
+          submission.levelNumber
+        );
+        console.log(`🔓 Unlock logic completed for team ${submission.teamId}`);
+      } catch (unlockError: any) {
+        console.error('Unlock error:', unlockError);
+        // Don't fail the judge request if unlock fails
+      }
+    } else {
+      console.log(`❌ Team ${submission.teamId} did not pass Phase ${submission.phaseNumber} Level ${submission.levelNumber} with score ${score}/${maxScore} (need ${passingScore})`);
+    }
     
     return c.json({ submission });
   } catch (error: any) {
