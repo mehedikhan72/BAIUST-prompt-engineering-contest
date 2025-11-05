@@ -1,9 +1,9 @@
 secrets = {
-    "ONE": "plaza",
-    "TWO": "Auditorium",
-    "THREE": "Pond",
+    "ONE": "Whiteboard",
+    "TWO": "Rice field",
+    "THREE": "Uniform",
     "FOUR": "Canteen",
-    "FIVE": "Rice field",
+    "FIVE": "Eggplant",
 }
 
 topical_guardrail_system_prompt = """
