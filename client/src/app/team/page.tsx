@@ -45,6 +45,7 @@ export default function TeamPage() {
       const res = await api.get('/leaderboard');
       return res.data.contest as { startTime: string; endTime: string; isActive?: boolean } | null;
     },
+    refetchInterval: 10000,
   });
 
   if (!user || user.role !== 'TEAM') {

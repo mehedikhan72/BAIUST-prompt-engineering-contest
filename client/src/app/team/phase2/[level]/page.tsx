@@ -50,6 +50,16 @@ export default function Phase2LevelPage() {
     refetchInterval: 3000, // Refresh to show updated submission status
   });
 
+  const { data: contest } = useQuery({
+    queryKey: ['contest-info'],
+    queryFn: async () => {
+      const res = await api.get('/leaderboard');
+      return res.data.contest as { startTime: string; endTime: string } | null;
+    },
+    refetchInterval: 10000,
+  });
+  const contestEnded = !!contest && Date.now() >= new Date(contest.endTime).getTime();
+
   const generateImage = useMutation({
     mutationFn: async (promptText: string) => {
       const formData = new FormData();
@@ -128,19 +138,44 @@ export default function Phase2LevelPage() {
     }
   };
 
-  // Unused - removed user assets functionality
-  // const handleUserAssetsChange = () => {};
-  // const removeUserAsset = () => {};
+  const handleUserAssetsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length > 0) {
+      // Validate file size (10MB max per file)
+      const maxSize = 10 * 1024 * 1024;
+      const validFiles = files.filter(file => {
+        if (file.size > maxSize) {
+          alert(`File ${file.name} exceeds 10MB limit.`);
+          return false;
+        }
+        return true;
+      });
+      
+      setUserAssets(prev => [...prev, ...validFiles]);
+      
+      // Create preview URLs for images
+      validFiles.forEach(file => {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setUserAssetPreviews(prev => [...prev, reader.result as string]);
+          };
+          reader.readAsDataURL(file);
+        } else {
+          setUserAssetPreviews(prev => [...prev, '']);
+        }
+      });
+    }
+  };
 
-  // Get the actual latest submission (sorted by date)
-  const sortedSubmissions = submissions?.sort((a: any, b: any) => 
-    new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
-  );
-  const latestSubmission = sortedSubmissions?.[0];
+  const removeUserAsset = (index: number) => {
+    setUserAssets(prev => prev.filter((_, i) => i !== index));
+    setUserAssetPreviews(prev => prev.filter((_, i) => i !== index));
+  };
 
-  // Determine if user can submit for THIS specific level
-  const canSubmit = !latestSubmission || // No submission yet - can submit
-    (latestSubmission.status === 'JUDGED' && latestSubmission.canResubmit); // Judged and allows resubmission
+  const latestSubmission = submissions?.[0];
+  const canSubmit = !latestSubmission || 
+    (latestSubmission.status === 'JUDGED' && latestSubmission.canResubmit);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
@@ -401,7 +436,7 @@ export default function Phase2LevelPage() {
                   <button
                     onClick={() => submitImage.mutate()}
                     disabled={submitImage.isPending || generateImage.isPending}
-                    className="w-full px-6 py-4 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 text-lg"
+                    className="w-full px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-medium rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                   >
                     {submitImage.isPending ? 'Submitting...' : '📝 Submit for Judgement'}
                   </button>

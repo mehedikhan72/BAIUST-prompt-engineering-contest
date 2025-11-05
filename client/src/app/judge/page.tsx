@@ -6,12 +6,13 @@ import { useAuthStore } from '@/store/authStore';
 import PhaseEditor from '@/components/judge/PhaseEditor';
 import TeamEditor from '@/components/judge/TeamEditor';
 import SubmissionJudge from '@/components/judge/SubmissionJudge';
+import ContestSettings from '@/components/judge/ContestSettings';
 
 export default function JudgePage() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
-  const [activeTab, setActiveTab] = useState<'phases' | 'teams' | 'submissions'>('phases');
+  const [activeTab, setActiveTab] = useState<'phases' | 'teams' | 'submissions' | 'contest'>('phases');
 
   useEffect(() => {
     if (!user || user.role !== 'JUDGE') {
@@ -69,6 +70,16 @@ export default function JudgePage() {
               Phases & Levels
             </button>
             <button
+              onClick={() => setActiveTab('contest')}
+              className={`${
+                activeTab === 'contest'
+                  ? 'border-slate-900 dark:border-slate-100 text-slate-900 dark:text-slate-100'
+                  : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700'
+              } whitespace-nowrap py-4 px-1 border-b-2 font-semibold text-sm transition-colors duration-200`}
+            >
+              Contest Settings
+            </button>
+            <button
               onClick={() => setActiveTab('teams')}
               className={`${
                 activeTab === 'teams'
@@ -94,6 +105,7 @@ export default function JudgePage() {
         {/* Tab Content */}
         <div className="mt-6 pb-12">
           {activeTab === 'phases' && <PhaseEditor />}
+          {activeTab === 'contest' && <ContestSettings />}
           {activeTab === 'teams' && <TeamEditor />}
           {activeTab === 'submissions' && <SubmissionJudge />}
         </div>

@@ -7,7 +7,6 @@ import { Phase } from '../models/Phase.js';
 import { Level } from '../models/Level.js';
 import { Submission } from '../models/Submission.js';
 import { applyJudgeBonus } from '../services/penalty.js';
-import { unlockNextLevel } from '../services/unlock.js';
 
 const judge = new Hono();
 
@@ -286,6 +285,72 @@ judge.put('/submissions/:submissionId/judge', async (c) => {
   } catch (error: any) {
     console.error('Judge submission error:', error);
     return c.json({ error: 'Failed to judge submission' }, 500);
+  }
+});
+
+// ===== Contest Settings =====
+// Get active contest
+judge.get('/contest', async (c) => {
+  try {
+    const contest = await Contest.findOne({ isActive: true });
+    if (!contest) {
+      return c.json({ contest: null });
+    }
+    return c.json({
+      contest: {
+        startTime: contest.startTime,
+        endTime: contest.endTime,
+        isActive: contest.isActive,
+      },
+    });
+  } catch (error: any) {
+    console.error('Get contest error:', error);
+    return c.json({ error: 'Failed to get contest' }, 500);
+  }
+});
+
+// Create/update active contest
+judge.put('/contest', async (c) => {
+  try {
+    const body = await c.req.json();
+    const { startTime, endTime, isActive } = body as { startTime?: string; endTime?: string; isActive?: boolean };
+
+    if (!startTime || !endTime) {
+      return c.json({ error: 'startTime and endTime are required' }, 400);
+    }
+
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      return c.json({ error: 'Invalid startTime or endTime' }, 400);
+    }
+    if (end.getTime() <= start.getTime()) {
+      return c.json({ error: 'endTime must be after startTime' }, 400);
+    }
+
+    let contest = await Contest.findOne({ isActive: true });
+    if (!contest) {
+      contest = new Contest({ startTime: start, endTime: end, isActive: isActive ?? true });
+    } else {
+      contest.startTime = start;
+      contest.endTime = end;
+      if (typeof isActive === 'boolean') {
+        contest.isActive = isActive;
+      }
+    }
+
+    await contest.save();
+    return c.json({
+      contest: {
+        startTime: contest.startTime,
+        endTime: contest.endTime,
+        isActive: contest.isActive,
+      },
+    });
+  } catch (error: any) {
+    console.error('Update contest error:', error);
+    return c.json({ error: 'Failed to update contest' }, 500);
   }
 });
 
