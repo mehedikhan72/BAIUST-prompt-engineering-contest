@@ -59,18 +59,34 @@ export async function addWrongGuessPenalty(teamId: string, phase: number, level:
 }
 
 export async function applyJudgeBonus(teamId: string, score: number, maxScore: number = 10) {
-  // Calculate bonus based on score (higher score = bigger penalty reduction)
-  const timePenalty = await calculateTimePenalty();
-  const bonus = Math.floor((score / maxScore) * timePenalty);
+  // Calculate a small fixed bonus based on score quality (max 10 minutes reduction)
+  // This prevents massive bonuses that can make penalties negative
+  const scorePercentage = score / maxScore;
+  const maxBonus = 10; // Maximum 10 minutes bonus
+  const bonus = Math.floor(scorePercentage * maxBonus);
+  
+  // Get current penalty to ensure it doesn't go negative
+  const progress = await TeamProgress.findOne({ teamId });
+  if (!progress) {
+    throw new Error('Team progress not found');
+  }
+  
+  const currentPenalty = progress.totalPenalty || 0;
+  const actualBonus = Math.min(bonus, currentPenalty); // Don't reduce below 0
+  const newPenalty = currentPenalty - actualBonus;
   
   await TeamProgress.findOneAndUpdate(
     { teamId },
     { 
-      $inc: { totalPenalty: -bonus }, // Subtract from penalty
-      $set: { lastSubmissionTime: new Date() }
+      $set: { 
+        totalPenalty: newPenalty, // Always >= 0
+        lastSubmissionTime: new Date() 
+      }
     }
   );
   
-  return bonus;
+  console.log(`🎯 Judge bonus applied: Team penalty ${currentPenalty} → ${newPenalty} (bonus: ${actualBonus} minutes for score ${score}/${maxScore})`);
+  
+  return actualBonus;
 }
 

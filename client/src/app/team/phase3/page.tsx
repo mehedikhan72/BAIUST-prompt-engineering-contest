@@ -108,8 +108,71 @@ export default function Phase3Page() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 pb-12">
+        {/* Phase 3 Instructions & PDF Download */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
-          <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">Submit Your RAG System</h3>
+          <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">📖 Phase 3: Build Your RAG System</h3>
+          
+          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg">
+            <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">Instructions:</h4>
+            <ol className="list-decimal list-inside space-y-2 text-sm text-blue-800 dark:text-blue-200">
+              <li>Download the provided PDF document below</li>
+              <li>Build a RAG (Retrieval-Augmented Generation) system using this document</li>
+              <li>Implement document parsing, chunking, embedding, and retrieval</li>
+              <li>Create a question-answering system that can query the document</li>
+              <li>Upload your code, documentation, and provide API endpoint if deployed</li>
+            </ol>
+          </div>
+
+          <div className="mb-6 p-6 bg-gradient-to-r from-emerald-50 to-blue-50 dark:from-emerald-900/20 dark:to-blue-900/20 border border-emerald-200 dark:border-emerald-700 rounded-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-lg font-bold text-emerald-900 dark:text-emerald-100 mb-2">
+                  📄 Required Document
+                </h4>
+                <p className="text-sm text-emerald-700 dark:text-emerald-300 mb-4">
+                  Download this PDF document to build your RAG system. This will be your knowledge base.
+                </p>
+                <div className="flex items-center gap-2 text-xs text-emerald-600 dark:text-emerald-400">
+                  <span>📋 Format: PDF</span>
+                  <span>•</span>
+                  <span>🔒 Required for Phase 3</span>
+                  <span>•</span>
+                  <span>⚡ Use for document retrieval</span>
+                </div>
+              </div>
+              <div className="ml-4">
+                <a
+                  href="/book.pdf"
+                  download="rag-document.pdf"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Download PDF
+                </a>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6 grid md:grid-cols-3 gap-4">
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="text-slate-900 dark:text-slate-100 font-semibold mb-2">🔍 Document Processing</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400">Parse PDF, extract text, chunk content for embedding</div>
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="text-slate-900 dark:text-slate-100 font-semibold mb-2">🧠 Vector Storage</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400">Create embeddings, store in vector database for similarity search</div>
+            </div>
+            <div className="p-4 bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+              <div className="text-slate-900 dark:text-slate-100 font-semibold mb-2">💬 Q&A System</div>
+              <div className="text-xs text-slate-600 dark:text-slate-400">Implement retrieval + generation pipeline for answering questions</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-6">
+          <h3 className="text-lg font-bold mb-4 text-gray-900 dark:text-white">📤 Submit Your RAG System</h3>
 
           {!canSubmit && latestSubmission?.status === 'PENDING' && (
             <div className="mb-4 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">

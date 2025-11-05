@@ -334,10 +334,10 @@ export default function Phase2LevelPage() {
               {/* 2. Reference Image */}
               <div className="mb-6">
                 <label className="block text-sm font-semibold mb-3 text-slate-900 dark:text-slate-100">
-                  🖼️ Reference Image {referenceFile && '(1 image)'}
+                  🖼️ Asset Image {referenceFile && '(1 image)'}
                 </label>
                 <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
-                  Upload a reference image to guide the AI generation (optional)
+                  Upload a Asset image to guide the AI generation (optional)
                 </p>
                 
                 <input
@@ -386,7 +386,7 @@ export default function Phase2LevelPage() {
                       }}
                       className="mt-2 w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors duration-200"
                     >
-                      Remove Reference Image
+                      Remove Assets Image
                     </button>
                   </div>
                 )}

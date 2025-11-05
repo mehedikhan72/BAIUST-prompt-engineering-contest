@@ -6,6 +6,7 @@ import { User } from '../models/User.js';
 import { Phase } from '../models/Phase.js';
 import { Level } from '../models/Level.js';
 import { Submission } from '../models/Submission.js';
+import { TeamProgress } from '../models/TeamProgress.js';
 import { applyJudgeBonus } from '../services/penalty.js';
 
 const judge = new Hono();
@@ -186,6 +187,31 @@ judge.put('/teams/:teamId', async (c) => {
   } catch (error: any) {
     console.error('Update team error:', error);
     return c.json({ error: 'Failed to update team' }, 500);
+  }
+});
+
+// Delete team
+judge.delete('/teams/:teamId', async (c) => {
+  try {
+    const teamId = c.req.param('teamId');
+    
+    // Find and delete the team
+    const team = await User.findOneAndDelete({ _id: teamId, role: 'TEAM' });
+    
+    if (!team) {
+      return c.json({ error: 'Team not found' }, 404);
+    }
+    
+    // Also delete related team progress and submissions
+    await TeamProgress.deleteOne({ teamId });
+    await Submission.deleteMany({ teamId });
+    
+    console.log(`🗑️ Deleted team: ${team.teamName} (${team.email}) and all related data`);
+    
+    return c.json({ message: 'Team deleted successfully', teamName: team.teamName });
+  } catch (error: any) {
+    console.error('Delete team error:', error);
+    return c.json({ error: 'Failed to delete team' }, 500);
   }
 });
 
