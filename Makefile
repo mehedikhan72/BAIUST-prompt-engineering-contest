@@ -14,7 +14,7 @@ help:
 
 dev:
 	@echo "🚀 Starting development environment..."
-	docker-compose -f $(DOCKER_COMPOSE_FILE) up --build --remove-orphans
+	docker-compose -f $(DOCKER_COMPOSE_FILE) up -d --build --remove-orphans
 
 stop:
 	@echo "⏹️  Stopping development environment..."
