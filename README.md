@@ -61,10 +61,10 @@ docker-compose up --build
 ```
 
 4. Access the application:
-- Frontend: http://localhost:3000
-- API: http://localhost:3001
-- AI Agent Service: http://localhost:8000
-- MongoDB: mongodb://localhost:27017
+- Frontend: http://128.199.30.12:3000
+- API: http://128.199.30.12:3001
+- AI Agent Service: http://128.199.30.12:8000
+- MongoDB: mongodb://128.199.30.12:27017
 
 ### Initial Setup
 

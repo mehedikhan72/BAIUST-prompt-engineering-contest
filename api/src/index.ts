@@ -15,7 +15,7 @@ const app = new Hono();
 
 // CORS middleware
 app.use('/*', cors({
-  origin: ['http://localhost:3000', 'http://client:3000'],
+  origin: ['http://128.199.30.12:3000', 'http://client:3000'],
   credentials: true
 }));
 
@@ -57,7 +57,7 @@ connectDB().then(() => {
     fetch: app.fetch,
     port
   }, (info) => {
-    console.log(`🚀 Server running on http://localhost:${info.port}`);
+    console.log(`🚀 Server running on http://128.199.30.12:${info.port}`);
   });
 }).catch((error) => {
   console.error('Failed to start server:', error);

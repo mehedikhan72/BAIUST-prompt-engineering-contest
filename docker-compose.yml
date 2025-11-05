@@ -44,7 +44,7 @@ services:
       - /app/node_modules
       - /app/.next
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:3001/api
+      - NEXT_PUBLIC_API_URL=http://128.199.30.12:3001/api
     depends_on:
       - api
     networks:
